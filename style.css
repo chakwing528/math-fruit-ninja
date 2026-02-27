@@ -4,9 +4,10 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #2c3e50; /* 深藍色背景 */
+    /* 換成類似水果忍者的木紋背景 (此為網路免費圖源，你也可換成自己的) */
+    background: url('https://www.transparenttextures.com/patterns/wood-pattern.png'), #4a2f1d;
     font-family: 'Arial', sans-serif;
-    user-select: none; /* 防止反白文字 */
+    user-select: none;
     -webkit-user-select: none;
 }
 
@@ -23,15 +24,16 @@ canvas {
     justify-content: space-between;
     align-items: center;
     color: white;
-    font-size: 24px;
+    font-size: 28px;
     font-weight: bold;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
-    pointer-events: none; /* 讓滑鼠點擊穿透 UI 砍到底下的畫布 */
+    /* 增強文字陰影，讓數字在複雜背景上依然清晰 */
+    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 3px 3px 8px rgba(0,0,0,0.8);
+    pointer-events: none;
 }
 
 #questionBox {
-    color: #f1c40f; /* 題目用黃色強調 */
-    font-size: 32px;
+    color: #ffcc00; /* 水果忍者的經典黃色 */
+    font-size: 36px;
 }
 
 #gameOver {
@@ -39,21 +41,25 @@ canvas {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
+    border: 3px solid #ffcc00;
     color: white;
     padding: 40px;
     border-radius: 15px;
     text-align: center;
     z-index: 10;
+    box-shadow: 0 0 20px rgba(0,0,0,0.8);
 }
 
 button {
     margin-top: 20px;
-    padding: 10px 20px;
-    font-size: 20px;
+    padding: 12px 24px;
+    font-size: 24px;
+    font-weight: bold;
     cursor: pointer;
     background-color: #e74c3c;
     color: white;
-    border: none;
-    border-radius: 5px;
+    border: 2px solid #fff;
+    border-radius: 8px;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
 }
