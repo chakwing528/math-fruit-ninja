@@ -5,28 +5,31 @@ canvas.height = window.innerHeight;
 
 // 遊戲狀態變數
 let score = 0;
-let lives = 3;
+let timeLeft = 60;
+let timerInterval = null;
 let fruits = [];
 let particles = []; 
 let bladeTrail = [];
 let isDrawing = false;
 let currentAnswer = 0;
-let gameActive = true;
+// 初始設為 false，等待玩家點擊開始
+let gameActive = false; 
 
 // DOM 元素
 const scoreEl = document.getElementById('score');
 const questionEl = document.getElementById('question');
-const livesEl = document.getElementById('lives');
+const timeEl = document.getElementById('time');
 const gameOverEl = document.getElementById('gameOver');
 const finalScoreEl = document.getElementById('finalScore');
+const startMenuEl = document.getElementById('startMenu');
+const uiEl = document.getElementById('ui');
 
-// --- 新增/修正：載入真實水果圖片 ---
-// 使用去背(透明)的水果圖片
+// 載入去背(透明)的水果圖片
 const fruitImages = [];
 const imageSrcs = [
-    'https://cdn.pixabay.com/photo/2014/12/21/23/58/apple-576628_1280.png', // 蘋果
-    'https://cdn.pixabay.com/photo/2016/04/01/10/05/orange-1299738_1280.png', // 橘子
-    'https://cdn.pixabay.com/photo/2016/03/10/16/32/watermelon-1248737_1280.png' // 西瓜
+    'https://cdn.pixabay.com/photo/2014/12/21/23/58/apple-576628_1280.png', 
+    'https://cdn.pixabay.com/photo/2016/04/01/10/05/orange-1299738_1280.png', 
+    'https://cdn.pixabay.com/photo/2016/03/10/16/32/watermelon-1248737_1280.png' 
 ];
 
 imageSrcs.forEach(src => {
@@ -35,7 +38,7 @@ imageSrcs.forEach(src => {
     fruitImages.push(img);
 });
 
-// --- 保留：粒子爆炸特效類別 ---
+// 粒子爆炸特效類別
 class Particle {
     constructor(x, y, color) {
         this.x = x;
@@ -50,7 +53,7 @@ class Particle {
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        this.vy += 0.2; // 粒子本身的重力下墜
+        this.vy += 0.2; 
         this.life -= 0.02; 
     }
 
@@ -71,13 +74,12 @@ class Fruit {
         this.y = y;
         this.vx = vx;
         this.vy = vy;
-        this.radius = 65; // 1. 放大水果判定範圍，從 45 加大到 65
+        // 1. 再次放大圖案：半徑從 65 加大到 90
+        this.radius = 90; 
         this.number = number;
         this.isCorrect = isCorrect;
         
-        // 隨機挑選一張水果圖片
         this.image = fruitImages[Math.floor(Math.random() * fruitImages.length)];
-        
         const colors = ['#e74c3c', '#e67e22', '#2ecc71', '#f1c40f'];
         this.juiceColor = colors[Math.floor(Math.random() * colors.length)];
         
@@ -88,8 +90,7 @@ class Fruit {
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        // 2. 減慢下降速度：顯著減小重力加速度，從 0.15 降到 0.04
-        this.vy += 0.04; 
+        this.vy += 0.04; // 保持慢速下降
         this.rotation += this.rotationSpeed; 
     }
 
@@ -98,32 +99,67 @@ class Fruit {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
 
-        // 3. 把圓形換成水果：繪製載入的水果圖片 (放大)
         if (this.image.complete && this.image.naturalHeight !== 0) {
             ctx.drawImage(this.image, -this.radius, -this.radius, this.radius * 2, this.radius * 2);
         } else {
-            // 備用方案
             ctx.beginPath();
             ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
             ctx.fillStyle = this.juiceColor;
             ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = 'black';
             ctx.stroke();
         }
         ctx.restore();
 
-        // 畫數字：固定在畫布正向，並有黑色粗輪廓，確保清晰可見
+        // 放大數字字體，配合變大的水果
         ctx.fillStyle = 'white';
-        ctx.font = 'bold 36px Arial';
+        ctx.font = 'bold 56px Arial'; 
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.strokeStyle = 'black';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 6;
         ctx.strokeText(this.number, this.x, this.y);
         ctx.fillText(this.number, this.x, this.y);
     }
 }
 
-// 產生新的數學題目 (不變)
+// 開始遊戲設定
+function startGame() {
+    let timeInput = document.getElementById('timeInput').value;
+    timeLeft = parseInt(timeInput) || 60;
+    
+    startMenuEl.style.display = 'none';
+    uiEl.style.display = 'flex';
+    timeEl.innerText = timeLeft;
+    
+    gameActive = true;
+    score = 0;
+    scoreEl.innerText = score;
+    fruits = [];
+    particles = [];
+    
+    generateQuestion();
+    
+    // 開始計時
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        timeEl.innerText = timeLeft;
+        if (timeLeft <= 0) {
+            endGame();
+        }
+    }, 1000);
+}
+
+// 結束遊戲
+function endGame() {
+    gameActive = false;
+    clearInterval(timerInterval);
+    gameOverEl.style.display = 'block';
+    finalScoreEl.innerText = score;
+}
+
+// 產生新的數學題目
 function generateQuestion() {
     let num1 = Math.floor(Math.random() * 10) + 1;
     let num2 = Math.floor(Math.random() * 10) + 1;
@@ -141,14 +177,22 @@ function generateQuestion() {
 function spawnFruits() {
     if (!gameActive) return;
     
-    let numberOfFruits = 3;
+    // 2. 確保畫面每次最多有 5 個圖案
+    let currentFruitCount = fruits.length;
+    if (currentFruitCount >= 5) return; 
+
+    // 計算這次還能產生幾個 (最多 3 個，但不能超過總數 5 個的上限)
+    let maxToSpawn = 5 - currentFruitCount;
+    let numberOfFruits = Math.min(3, maxToSpawn); 
+    
+    if (numberOfFruits <= 0) return;
+
     let correctPushed = false;
 
     for (let i = 0; i < numberOfFruits; i++) {
         let startX = Math.random() * (canvas.width - 200) + 100;
         let startY = canvas.height + 50;
         let vx = (Math.random() - 0.5) * 4; 
-        // 2. 減慢上升速度：降低初始拋射速度，配合較小的重力，形成緩慢拋物線
         let vy = -(Math.random() * 3 + 8); 
         
         let number;
@@ -167,14 +211,14 @@ function spawnFruits() {
     }
 }
 
-// --- 切開水果產生果汁粒子 ---
+// 切開產生果汁粒子
 function createExplosion(x, y, color) {
     for (let i = 0; i < 30; i++) {
         particles.push(new Particle(x, y, color));
     }
 }
 
-// 滑鼠/觸控事件處理 (刀光) (不變)
+// 滑鼠/觸控事件處理
 function handleInputStart(e) { isDrawing = true; bladeTrail = []; }
 function handleInputEnd() { isDrawing = false; bladeTrail = []; }
 function handleInputMove(e) {
@@ -193,7 +237,7 @@ window.addEventListener('touchstart', handleInputStart, {passive: false});
 window.addEventListener('touchmove', handleInputMove, {passive: false});
 window.addEventListener('touchend', handleInputEnd);
 
-// 碰撞偵測 (加入觸發爆炸特效)
+// 碰撞偵測 (永久生命，計分制)
 function checkCollision(mx, my) {
     for (let i = fruits.length - 1; i >= 0; i--) {
         let f = fruits[i];
@@ -202,31 +246,19 @@ function checkCollision(mx, my) {
         let distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < f.radius) {
-            // 切中水果時觸發粒子爆炸
             createExplosion(f.x, f.y, f.juiceColor);
 
             if (f.number === currentAnswer) {
+                // 答對加 10 分
                 score += 10;
-                scoreEl.innerText = score;
                 generateQuestion();
             } else {
-                lives--;
-                updateLives();
+                // 3. 永久生命，答錯改為扣 5 分 (最低 0 分)
+                score = Math.max(0, score - 5);
             }
+            scoreEl.innerText = score;
             fruits.splice(i, 1);
         }
-    }
-}
-
-function updateLives() {
-    let hearts = "";
-    for(let i=0; i<lives; i++) hearts += "❤️";
-    livesEl.innerText = hearts;
-
-    if (lives <= 0) {
-        gameActive = false;
-        gameOverEl.style.display = 'block';
-        finalScoreEl.innerText = score;
     }
 }
 
@@ -238,7 +270,6 @@ function drawBlade() {
     for (let i = 1; i < bladeTrail.length; i++) {
         ctx.lineTo(bladeTrail[i].x, bladeTrail[i].y);
     }
-    // 讓刀光稍微透點藍光，更像原版遊戲裡的刀刃
     ctx.shadowBlur = 15;
     ctx.shadowColor = '#00f3ff';
     ctx.strokeStyle = '#ffffff';
@@ -253,7 +284,6 @@ function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (gameActive) {
-        // 更新並繪製水果
         for (let i = fruits.length - 1; i >= 0; i--) {
             fruits[i].update();
             fruits[i].draw();
@@ -262,7 +292,6 @@ function gameLoop() {
             }
         }
 
-        // 更新並繪製粒子
         for (let i = particles.length - 1; i >= 0; i--) {
             particles[i].update();
             particles[i].draw();
@@ -282,8 +311,6 @@ window.addEventListener('resize', () => {
     canvas.height = window.innerHeight;
 });
 
-// 啟動遊戲
-generateQuestion();
-// 4. 調整產出頻率：調慢產出頻率，每 3.5 秒一波，配合變慢的下降速度
+// 固定每 3.5 秒嘗試產出水果 (由 spawnFruits 內部控制數量上限)
 setInterval(spawnFruits, 3500); 
 gameLoop();
