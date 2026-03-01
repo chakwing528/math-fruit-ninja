@@ -4,8 +4,8 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    /* 換成類似水果忍者的木紋背景 (此為網路免費圖源，你也可換成自己的) */
-    background: url('https://www.transparenttextures.com/patterns/wood-pattern.png'), #4a2f1d;
+    /* 換成類似水果忍者的深色道場背景圖案 */
+    background: url('https://www.transparenttextures.com/patterns/dark-dotted-2.png'), #34495e;
     font-family: 'Arial', sans-serif;
     user-select: none;
     -webkit-user-select: none;
@@ -26,13 +26,13 @@ canvas {
     color: white;
     font-size: 28px;
     font-weight: bold;
-    /* 增強文字陰影，讓數字在複雜背景上依然清晰 */
+    /* 增強文字陰影，使其更具立體感和原版風味 */
     text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 3px 3px 8px rgba(0,0,0,0.8);
     pointer-events: none;
 }
 
 #questionBox {
-    color: #ffcc00; /* 水果忍者的經典黃色 */
+    color: #ffcc00; /* 水果忍者的經典黃色，題目更清晰 */
     font-size: 36px;
 }
 
