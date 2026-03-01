@@ -12,7 +12,6 @@ let particles = [];
 let bladeTrail = [];
 let isDrawing = false;
 let currentAnswer = 0;
-// 初始設為 false，等待玩家點擊開始
 let gameActive = false; 
 
 // DOM 元素
@@ -24,12 +23,12 @@ const finalScoreEl = document.getElementById('finalScore');
 const startMenuEl = document.getElementById('startMenu');
 const uiEl = document.getElementById('ui');
 
-// 載入去背(透明)的水果圖片
+// --- 修復：改用 Google 官方高畫質開源圖庫，保證絕對能成功載入 ---
 const fruitImages = [];
 const imageSrcs = [
-    'https://cdn.pixabay.com/photo/2014/12/21/23/58/apple-576628_1280.png', 
-    'https://cdn.pixabay.com/photo/2016/04/01/10/05/orange-1299738_1280.png', 
-    'https://cdn.pixabay.com/photo/2016/03/10/16/32/watermelon-1248737_1280.png' 
+    'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f34e.png', // 紅蘋果
+    'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f34a.png', // 橘子
+    'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f349.png'  // 西瓜
 ];
 
 imageSrcs.forEach(src => {
@@ -67,15 +66,14 @@ class Particle {
     }
 }
 
-// 水果類別更新
+// 水果類別
 class Fruit {
     constructor(x, y, vx, vy, number, isCorrect) {
         this.x = x;
         this.y = y;
         this.vx = vx;
         this.vy = vy;
-        // 1. 再次放大圖案：半徑從 65 加大到 90
-        this.radius = 90; 
+        this.radius = 90; // 保持 V3 的大圖案設計
         this.number = number;
         this.isCorrect = isCorrect;
         
@@ -90,7 +88,7 @@ class Fruit {
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        this.vy += 0.04; // 保持慢速下降
+        this.vy += 0.04; 
         this.rotation += this.rotationSpeed; 
     }
 
@@ -99,6 +97,7 @@ class Fruit {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
 
+        // 如果圖片成功載入就畫出水果，否則畫圓形
         if (this.image.complete && this.image.naturalHeight !== 0) {
             ctx.drawImage(this.image, -this.radius, -this.radius, this.radius * 2, this.radius * 2);
         } else {
@@ -112,7 +111,7 @@ class Fruit {
         }
         ctx.restore();
 
-        // 放大數字字體，配合變大的水果
+        // 繪製巨大數字，加上粗黑框確保在哪種水果上都看得清楚
         ctx.fillStyle = 'white';
         ctx.font = 'bold 56px Arial'; 
         ctx.textAlign = 'center';
@@ -141,7 +140,6 @@ function startGame() {
     
     generateQuestion();
     
-    // 開始計時
     timerInterval = setInterval(() => {
         timeLeft--;
         timeEl.innerText = timeLeft;
@@ -173,15 +171,13 @@ function generateQuestion() {
     currentAnswer = operator === '+' ? num1 + num2 : num1 - num2;
 }
 
-// 產生一波水果
+// 產生一波水果 (確保畫面最多 5 個)
 function spawnFruits() {
     if (!gameActive) return;
     
-    // 2. 確保畫面每次最多有 5 個圖案
     let currentFruitCount = fruits.length;
     if (currentFruitCount >= 5) return; 
 
-    // 計算這次還能產生幾個 (最多 3 個，但不能超過總數 5 個的上限)
     let maxToSpawn = 5 - currentFruitCount;
     let numberOfFruits = Math.min(3, maxToSpawn); 
     
@@ -249,11 +245,9 @@ function checkCollision(mx, my) {
             createExplosion(f.x, f.y, f.juiceColor);
 
             if (f.number === currentAnswer) {
-                // 答對加 10 分
                 score += 10;
                 generateQuestion();
             } else {
-                // 3. 永久生命，答錯改為扣 5 分 (最低 0 分)
                 score = Math.max(0, score - 5);
             }
             scoreEl.innerText = score;
@@ -311,6 +305,6 @@ window.addEventListener('resize', () => {
     canvas.height = window.innerHeight;
 });
 
-// 固定每 3.5 秒嘗試產出水果 (由 spawnFruits 內部控制數量上限)
+// 固定每 3.5 秒嘗試產出水果
 setInterval(spawnFruits, 3500); 
 gameLoop();
