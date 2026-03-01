@@ -7,7 +7,7 @@ canvas.height = window.innerHeight;
 let score = 0;
 let lives = 3;
 let fruits = [];
-let particles = []; // 新增：用來裝載爆炸粒子的陣列
+let particles = []; 
 let bladeTrail = [];
 let isDrawing = false;
 let currentAnswer = 0;
@@ -20,13 +20,13 @@ const livesEl = document.getElementById('lives');
 const gameOverEl = document.getElementById('gameOver');
 const finalScoreEl = document.getElementById('finalScore');
 
-// --- 新增：載入真實水果圖片 ---
-// 請在你的專案資料夾內放入這些圖片，或者替換成你喜歡的網址
+// --- 新增/修正：載入真實水果圖片 ---
+// 使用去背(透明)的水果圖片
 const fruitImages = [];
 const imageSrcs = [
-    'https://cdn.pixabay.com/photo/2014/12/21/23/58/apple-576628_1280.png', // 蘋果 (去背PNG)
-    'https://cdn.pixabay.com/photo/2016/04/01/10/05/orange-1299738_1280.png', // 橘子 (去背PNG)
-    'https://cdn.pixabay.com/photo/2016/03/10/16/32/watermelon-1248737_1280.png' // 西瓜 (去背PNG)
+    'https://cdn.pixabay.com/photo/2014/12/21/23/58/apple-576628_1280.png', // 蘋果
+    'https://cdn.pixabay.com/photo/2016/04/01/10/05/orange-1299738_1280.png', // 橘子
+    'https://cdn.pixabay.com/photo/2016/03/10/16/32/watermelon-1248737_1280.png' // 西瓜
 ];
 
 imageSrcs.forEach(src => {
@@ -35,24 +35,23 @@ imageSrcs.forEach(src => {
     fruitImages.push(img);
 });
 
-// --- 新增：粒子爆炸特效類別 ---
+// --- 保留：粒子爆炸特效類別 ---
 class Particle {
     constructor(x, y, color) {
         this.x = x;
         this.y = y;
-        // 隨機向四面八方噴射
         this.vx = (Math.random() - 0.5) * 15;
         this.vy = (Math.random() - 0.5) * 15;
-        this.life = 1.0; // 粒子的壽命 (透明度)
-        this.size = Math.random() * 8 + 3; // 隨機大小
+        this.life = 1.0; 
+        this.size = Math.random() * 8 + 3; 
         this.color = color;
     }
 
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        this.vy += 0.2; // 粒子本身的果汁重力下墜
-        this.life -= 0.02; // 逐漸消失
+        this.vy += 0.2; // 粒子本身的重力下墜
+        this.life -= 0.02; 
     }
 
     draw() {
@@ -61,7 +60,7 @@ class Particle {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 1.0; // 恢復透明度
+        ctx.globalAlpha = 1.0; 
     }
 }
 
@@ -72,27 +71,26 @@ class Fruit {
         this.y = y;
         this.vx = vx;
         this.vy = vy;
-        this.radius = 45; // 稍微加大判定範圍
+        this.radius = 65; // 1. 放大水果判定範圍，從 45 加大到 65
         this.number = number;
         this.isCorrect = isCorrect;
         
-        // 隨機挑選一張載入好的水果圖片
+        // 隨機挑選一張水果圖片
         this.image = fruitImages[Math.floor(Math.random() * fruitImages.length)];
         
-        // 給予果汁特效一個對應的隨機顏色 (紅、橘、綠)
         const colors = ['#e74c3c', '#e67e22', '#2ecc71', '#f1c40f'];
         this.juiceColor = colors[Math.floor(Math.random() * colors.length)];
         
-        this.rotation = Math.random() * Math.PI * 2; // 初始旋轉角度
-        this.rotationSpeed = (Math.random() - 0.5) * 0.1; // 旋轉速度
+        this.rotation = Math.random() * Math.PI * 2; 
+        this.rotationSpeed = (Math.random() - 0.5) * 0.1; 
     }
 
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        // 修改：大幅降低重力加速度 (從 0.15 降到 0.04)，讓水果在空中停留更久
+        // 2. 減慢下降速度：顯著減小重力加速度，從 0.15 降到 0.04
         this.vy += 0.04; 
-        this.rotation += this.rotationSpeed; // 讓水果在空中自轉
+        this.rotation += this.rotationSpeed; 
     }
 
     draw() {
@@ -100,10 +98,11 @@ class Fruit {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
 
-        // 如果圖片載入成功就畫圖片，否則畫原本的圓形當作備用
+        // 3. 把圓形換成水果：繪製載入的水果圖片 (放大)
         if (this.image.complete && this.image.naturalHeight !== 0) {
             ctx.drawImage(this.image, -this.radius, -this.radius, this.radius * 2, this.radius * 2);
         } else {
+            // 備用方案
             ctx.beginPath();
             ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
             ctx.fillStyle = this.juiceColor;
@@ -112,9 +111,8 @@ class Fruit {
         }
         ctx.restore();
 
-        // 畫數字 (固定在畫布正向，不隨水果旋轉)
+        // 畫數字：固定在畫布正向，並有黑色粗輪廓，確保清晰可見
         ctx.fillStyle = 'white';
-        // 加上黑色粗邊框讓數字在真實圖片上清晰可見
         ctx.font = 'bold 36px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -150,7 +148,7 @@ function spawnFruits() {
         let startX = Math.random() * (canvas.width - 200) + 100;
         let startY = canvas.height + 50;
         let vx = (Math.random() - 0.5) * 4; 
-        // 修改：降低初始向上拋的力道，配合較小的重力，形成完美的慢速拋物線
+        // 2. 減慢上升速度：降低初始拋射速度，配合較小的重力，形成緩慢拋物線
         let vy = -(Math.random() * 3 + 8); 
         
         let number;
@@ -204,7 +202,7 @@ function checkCollision(mx, my) {
         let distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < f.radius) {
-            // 新增：觸發粒子爆炸
+            // 切中水果時觸發粒子爆炸
             createExplosion(f.x, f.y, f.juiceColor);
 
             if (f.number === currentAnswer) {
@@ -240,14 +238,14 @@ function drawBlade() {
     for (let i = 1; i < bladeTrail.length; i++) {
         ctx.lineTo(bladeTrail[i].x, bladeTrail[i].y);
     }
-    // 讓刀光稍微透點藍光，更像遊戲裡的刀刃
+    // 讓刀光稍微透點藍光，更像原版遊戲裡的刀刃
     ctx.shadowBlur = 15;
     ctx.shadowColor = '#00f3ff';
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
     ctx.stroke();
-    ctx.shadowBlur = 0; // 重置陰影
+    ctx.shadowBlur = 0; 
 }
 
 // 遊戲主迴圈
@@ -264,7 +262,7 @@ function gameLoop() {
             }
         }
 
-        // 新增：更新並繪製粒子
+        // 更新並繪製粒子
         for (let i = particles.length - 1; i >= 0; i--) {
             particles[i].update();
             particles[i].draw();
@@ -286,6 +284,6 @@ window.addEventListener('resize', () => {
 
 // 啟動遊戲
 generateQuestion();
-// 修改：因為下降變慢了，產出頻率也稍微調慢為 3.5 秒一波，避免畫面上一次塞滿太多水果
+// 4. 調整產出頻率：調慢產出頻率，每 3.5 秒一波，配合變慢的下降速度
 setInterval(spawnFruits, 3500); 
 gameLoop();
