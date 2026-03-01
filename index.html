@@ -7,13 +7,24 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="ui">
-        <div id="scoreBox">分數: <span id="score">0</span></div>
-        <div id="questionBox">請切出答案: <span id="question">2 + 3</span> = ?</div>
-        <div id="livesBox">生命: <span id="lives">❤️❤️❤️</span></div>
+    <div id="startMenu">
+        <h1>數學水果忍者</h1>
+        <p>請設定遊戲時間 (秒)：</p>
+        <input type="number" id="timeInput" value="60" min="10" max="300">
+        <br>
+        <button onclick="startGame()">開始遊戲</button>
     </div>
+
+    <div id="ui" style="display: none;">
+        <div id="scoreBox">分數: <span id="score">0</span></div>
+        <div id="questionBox">請切出答案: <span id="question"></span> = ?</div>
+        <div id="timeBox">時間: <span id="time">60</span>s</div>
+    </div>
+    
+    <div id="version">V3</div>
+
     <div id="gameOver" style="display: none;">
-        <h1>遊戲結束</h1>
+        <h1>時間到！</h1>
         <p>最終分數: <span id="finalScore">0</span></p>
         <button onclick="location.reload()">再玩一次</button>
     </div>
