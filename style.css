@@ -4,7 +4,6 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    /* 換成類似水果忍者的深色道場背景圖案 */
     background: url('https://www.transparenttextures.com/patterns/dark-dotted-2.png'), #34495e;
     font-family: 'Arial', sans-serif;
     user-select: none;
@@ -26,17 +25,27 @@ canvas {
     color: white;
     font-size: 28px;
     font-weight: bold;
-    /* 增強文字陰影，使其更具立體感和原版風味 */
     text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 3px 3px 8px rgba(0,0,0,0.8);
     pointer-events: none;
 }
 
 #questionBox {
-    color: #ffcc00; /* 水果忍者的經典黃色，題目更清晰 */
+    color: #ffcc00;
     font-size: 36px;
 }
 
-#gameOver {
+#version {
+    position: absolute;
+    bottom: 15px;
+    left: 20px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 24px;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 5;
+}
+
+#startMenu, #gameOver {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -49,6 +58,18 @@ canvas {
     text-align: center;
     z-index: 10;
     box-shadow: 0 0 20px rgba(0,0,0,0.8);
+}
+
+#startMenu input {
+    font-size: 28px;
+    padding: 5px;
+    width: 120px;
+    text-align: center;
+    margin-top: 15px;
+    border-radius: 8px;
+    border: 2px solid #fff;
+    background: #2c3e50;
+    color: white;
 }
 
 button {
