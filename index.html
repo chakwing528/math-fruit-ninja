@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數學水果忍者 V24</title>
+    <title>數學水果忍者 V25</title>
     <style>
         body, html {
             margin: 0;
@@ -342,7 +342,7 @@
         }
     </style>
 </head>
-<body>
+<body onclick="handleGlobalClick()">
 
     <!-- 遊戲主選單 -->
     <div id="startMenu" class="menu-panel">
@@ -416,7 +416,7 @@
     </div>
     
     <!-- 左下角版本號 -->
-    <div id="version">V24</div>
+    <div id="version">V25</div>
 
     <!-- 遊戲結束畫面與排行榜 -->
     <div id="gameOver" class="menu-panel" style="display: none;">
@@ -444,10 +444,9 @@
         // =========================================================================
         // 🎵 預設音效檔案設定 🎵
         // 請將你的音效檔案上傳至 GitHub，並與這個 index.html 放在同一個資料夾。
-        // 確保檔名與下方的設定一致（這裡預設為 bgm.mp3 和 slice.mp3）
         // =========================================================================
         const DEFAULT_BGM_URL = "./bgm.mp3"; 
-        const DEFAULT_SLICE_URL = "./slice.mp3"; 
+        const DEFAULT_SLICE_URL = "./slice.m4a"; // 已修改：mp3 改為 m4a
         // =========================================================================
 
         const canvas = document.getElementById('gameCanvas');
@@ -466,6 +465,16 @@
         const dbName = "FruitNinjaDB";
         const storeName = "settingsStore";
         let localDB;
+
+        // 為了處理現代瀏覽器的 Autoplay 限制，使用者第一次點擊畫面時播放背景音樂
+        let bgmStarted = false;
+        function handleGlobalClick() {
+            if (!bgmStarted && bgmPlayer.src) {
+                bgmPlayer.play().then(() => {
+                    bgmStarted = true;
+                }).catch(e => console.log("等待點擊觸發音效中..."));
+            }
+        }
 
         function initIndexedDB() {
             return new Promise((resolve, reject) => {
@@ -573,6 +582,8 @@
             const blob = new Blob([arrayBuffer]);
             const objectURL = URL.createObjectURL(blob);
             bgmPlayer.src = objectURL;
+            // 載入後嘗試自動播放
+            bgmPlayer.play().catch(e => console.log("已就緒，等待點擊播放音樂"));
         }
 
         function applySliceSound(arrayBuffer) {
@@ -611,6 +622,7 @@
                 applyBgm(bgmBuf);
             } else if (DEFAULT_BGM_URL !== "") {
                 bgmPlayer.src = DEFAULT_BGM_URL;
+                bgmPlayer.play().catch(e => console.log("已就緒，等待點擊播放音樂"));
             }
 
             // 處理切擊聲效載入機制
@@ -724,7 +736,6 @@
                         source.connect(audioCtx.destination);
                         source.start(0);
                     } else {
-                        // 當沒有上傳自訂音效也沒貼 Base64 時，確保使用內建安全合成音，永不失效
                         const swooshOsc = audioCtx.createOscillator();
                         const swooshGain = audioCtx.createGain();
                         swooshOsc.type = 'sine';
@@ -1341,8 +1352,9 @@
             timeEl.innerText = timeLeft;
             questionEl.innerHTML = difficultySettings[currentDifficulty].shortText;
             
-            if (bgmPlayer.src && bgmPlayer.src !== window.location.href && bgmPlayer.paused) {
-                bgmPlayer.play().catch(e => console.log("BGM 播放失敗：", e));
+            // 遊戲開始時，如果音樂沒在播，則強制嘗試播放
+            if (bgmPlayer.src && bgmPlayer.paused) {
+                bgmPlayer.play().catch(e => console.log("音樂播放受阻"));
             }
             
             gameActive = true;
