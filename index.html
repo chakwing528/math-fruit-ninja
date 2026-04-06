@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數學水果忍者 V23</title>
+    <title>數學水果忍者 V24</title>
     <style>
         body, html {
             margin: 0;
@@ -416,7 +416,7 @@
     </div>
     
     <!-- 左下角版本號 -->
-    <div id="version">V23</div>
+    <div id="version">V24</div>
 
     <!-- 遊戲結束畫面與排行榜 -->
     <div id="gameOver" class="menu-panel" style="display: none;">
@@ -439,17 +439,16 @@
     </div>
 
     <canvas id="gameCanvas"></canvas>
-    
-    <!-- 新增：引入外部的聲效檔案 -->
-    <script src="sounds.js"></script>
 
     <script>
         // =========================================================================
-        // 🎵 音效代碼已分離至外部檔案 sounds.js 🎵
-        // 主程式將從 sounds.js 讀取音效變數，保持這裡乾淨。若檔案遺失則以空字串防呆。
+        // 🎵 預設音效檔案設定 🎵
+        // 請將你的音效檔案上傳至 GitHub，並與這個 index.html 放在同一個資料夾。
+        // 確保檔名與下方的設定一致（這裡預設為 bgm.mp3 和 slice.mp3）
         // =========================================================================
-        if (typeof DEFAULT_BGM_BASE64 === 'undefined') { window.DEFAULT_BGM_BASE64 = ""; }
-        if (typeof DEFAULT_SLICE_BASE64 === 'undefined') { window.DEFAULT_SLICE_BASE64 = ""; }
+        const DEFAULT_BGM_URL = "./bgm.mp3"; 
+        const DEFAULT_SLICE_URL = "./slice.mp3"; 
+        // =========================================================================
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -610,19 +609,19 @@
             const bgmBuf = await loadFromDB('bgm');
             if (bgmBuf) {
                 applyBgm(bgmBuf);
-            } else if (DEFAULT_BGM_BASE64 !== "") {
-                bgmPlayer.src = DEFAULT_BGM_BASE64;
+            } else if (DEFAULT_BGM_URL !== "") {
+                bgmPlayer.src = DEFAULT_BGM_URL;
             }
 
             // 處理切擊聲效載入機制
             const sliceBuf = await loadFromDB('sliceSound');
             if (sliceBuf) {
                 applySliceSound(sliceBuf);
-            } else if (DEFAULT_SLICE_BASE64 !== "") {
-                fetch(DEFAULT_SLICE_BASE64)
+            } else if (DEFAULT_SLICE_URL !== "") {
+                fetch(DEFAULT_SLICE_URL)
                     .then(res => res.arrayBuffer())
                     .then(buffer => applySliceSound(buffer))
-                    .catch(e => console.log('預設 Base64 切擊音效載入失敗', e));
+                    .catch(e => console.log('預設切擊音效載入失敗，將使用內建音效', e));
             }
 
             const bombBuf = await loadFromDB('bombSound');
