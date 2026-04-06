@@ -3,33 +3,1670 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數學水果忍者</title>
-    <link rel="stylesheet" href="style.css">
+    <title>數學水果忍者 V23</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #4a2c16; 
+            background-image:
+                repeating-linear-gradient(
+                    90deg,
+                    rgba(0, 0, 0, 0.5) 0px,
+                    rgba(0, 0, 0, 0.5) 4px,
+                    transparent 4px,
+                    transparent 120px
+                ),
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(0, 0, 0, 0.05) 0px,
+                    rgba(0, 0, 0, 0.05) 1px,
+                    transparent 1px,
+                    transparent 15px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    rgba(255, 255, 255, 0.03) 0px,
+                    rgba(255, 255, 255, 0.01) 60px,
+                    rgba(0, 0, 0, 0.15) 116px,
+                    rgba(0, 0, 0, 0.35) 120px
+                );
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        @keyframes screenShake {
+            0% { transform: translate(2px, 2px) rotate(0deg); }
+            10% { transform: translate(-2px, -3px) rotate(-1deg); }
+            20% { transform: translate(-4px, 0px) rotate(1deg); }
+            30% { transform: translate(4px, 3px) rotate(0deg); }
+            40% { transform: translate(2px, -2px) rotate(1deg); }
+            50% { transform: translate(-2px, 3px) rotate(-1deg); }
+            60% { transform: translate(-4px, 2px) rotate(0deg); }
+            70% { transform: translate(4px, 2px) rotate(-1deg); }
+            80% { transform: translate(-2px, -2px) rotate(1deg); }
+            90% { transform: translate(2px, 3px) rotate(0deg); }
+            100% { transform: translate(2px, -3px) rotate(-1deg); }
+        }
+        
+        .shake-active {
+            animation: screenShake 0.4s;
+            animation-iteration-count: 1;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center; 
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 4px 4px 10px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        #questionBox {
+            color: #ffffff;
+            font-size: 36px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+        
+        #questionBox span {
+            color: #ffcc00;
+            font-size: 40px;
+            padding: 0 10px;
+        }
+
+        .menu-panel {
+            position: fixed; 
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(30, 30, 30, 0.95);
+            border: 4px solid #ffcc00;
+            color: white;
+            padding: 30px 50px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 10;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            min-width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .menu-panel h1 {
+            margin-top: 0;
+            color: #ffcc00;
+            font-size: 44px;
+            text-shadow: 2px 2px 5px #000;
+            margin-bottom: 20px;
+        }
+        
+        .menu-panel h2 {
+            margin-top: 0;
+            color: #3498db;
+            font-size: 32px;
+            text-shadow: 2px 2px 5px #000;
+        }
+
+        .menu-panel p {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .admin-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 12px 0;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .menu-panel select, .menu-panel input[type="number"], .menu-panel input[type="text"] {
+            font-size: 20px;
+            padding: 6px;
+            width: 250px;
+            text-align: center;
+            border-radius: 8px;
+            border: 3px solid #fff;
+            background: #2c3e50;
+            color: #ffcc00;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .menu-panel input[type="number"] {
+            width: 120px;
+            cursor: text;
+        }
+
+        .menu-panel input[type="text"] {
+            font-size: 14px;
+            text-align: left;
+            padding: 8px;
+            cursor: text;
+            width: 230px;
+        }
+        
+        .menu-panel input[type="file"] {
+            font-size: 16px;
+            width: 220px;
+            color: white;
+        }
+
+        .difficulty-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .diff-btn {
+            margin-top: 0;
+            padding: 14px 10px;
+            font-size: 22px;
+            color: #fff;
+            border: 4px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+        }
+
+        .diff-btn.active {
+            border: 4px solid #fff;
+            transform: scale(1.03);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+
+        .diff-c { background-color: #e74c3c; } 
+        .diff-b { background-color: #f39c12; } 
+        .diff-a { background-color: #2ecc71; } 
+        .diff-s { background-color: #3498db; } 
+        .diff-ss { background-color: #9b59b6; } 
+        .diff-ssr { background-color: #8e44ad; } 
+        .diff-sss { background-color: #2c3e50; } 
+
+        button.action-btn {
+            margin-top: 10px;
+            padding: 12px 24px;
+            font-size: 26px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #e74c3c;
+            color: white;
+            border: 3px solid #fff;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+            width: 100%;
+        }
+        
+        .btn-secondary {
+            background-color: #7f8c8d !important;
+            margin-top: 10px !important;
+        }
+        
+        .btn-success {
+            background-color: #2ecc71 !important;
+            width: 100%;
+        }
+
+        button.action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .submit-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 15px 0;
+            align-items: center; 
+        }
+        
+        .submit-group input {
+            font-size: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 3px solid #fff;
+            background: #2c3e50;
+            color: #ffcc00;
+            text-align: center;
+            font-weight: bold;
+            width: 100%; 
+            max-width: 320px; 
+            box-sizing: border-box;
+        }
+
+        .submit-group button {
+            max-width: 320px;
+        }
+
+        .submit-group input::placeholder {
+            color: #888;
+        }
+
+        .leaderboard-container {
+            background: rgba(0,0,0,0.6);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: left;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 2px solid #f1c40f;
+        }
+
+        .leaderboard-container h3 {
+            margin-top: 0;
+            color: #f1c40f;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .leaderboard-container ol {
+            padding-left: 25px; 
+            margin: 0;
+            font-size: 20px;
+            color: #fff;
+        }
+
+        .leaderboard-container li {
+            padding: 6px 0;
+            border-bottom: 1px dashed #555;
+            line-height: 1.4;
+        }
+
+        .leaderboard-container li:last-child {
+            border-bottom: none;
+        }
+
+        .leaderboard-highlight {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+
+        #version {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px #000;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        @media (max-width: 768px) {
+            #ui { font-size: 18px; padding: 10px 20px; }
+            #questionBox { font-size: 20px; }
+            #questionBox span { font-size: 24px; }
+            .menu-panel { padding: 20px 30px; min-width: 320px; max-height: 95vh; }
+            .menu-panel h1 { font-size: 32px; margin-bottom: 10px; }
+            .admin-row { font-size: 18px; flex-direction: column; align-items: flex-start; }
+            .menu-panel select, .menu-panel input[type="number"], .menu-panel input[type="text"], .menu-panel input[type="file"] { width: 100%; margin-top: 5px; }
+            .diff-btn { font-size: 18px; padding: 10px; }
+            .submit-group input, .submit-group button { max-width: 100%; }
+        }
+    </style>
 </head>
 <body>
-    <div id="startMenu">
+
+    <!-- 遊戲主選單 -->
+    <div id="startMenu" class="menu-panel">
         <h1>數學水果忍者</h1>
-        <p>請設定遊戲時間 (秒)：</p>
-        <input type="number" id="timeInput" value="60" min="10" max="300">
-        <br>
-        <button onclick="startGame()">開始遊戲</button>
+        
+        <p style="font-size: 20px; color: #ccc; margin-bottom: 10px; text-align: left;">請選擇挑戰難度：</p>
+        
+        <div class="difficulty-grid" id="difficultyGrid">
+            <button class="diff-btn diff-c active" data-diff="C">C: 2的倍數 (1-100)</button>
+            <button class="diff-btn diff-b" data-diff="B">B: 3的倍數 (1-100)</button>
+            <button class="diff-btn diff-a" data-diff="A">A: 4的倍數 (1-100)</button>
+            <button class="diff-btn diff-s" data-diff="S">S: 6的倍數 (1-100)</button>
+            <button class="diff-btn diff-ss" data-diff="SS">SS: 4的倍數 (100-200)</button>
+            <button class="diff-btn diff-ssr" data-diff="SSR">SSR: 6的倍數 (100-200)</button>
+            <button class="diff-btn diff-sss" data-diff="SSS">SSS: 7的倍數 或 質數 (50-200)</button>
+        </div>
+
+        <button class="action-btn" onclick="startGame()">開始遊戲</button>
+        <button class="action-btn btn-secondary" onclick="openAdmin()">後台管理</button>
     </div>
 
+    <!-- 後台管理分頁 -->
+    <div id="adminMenu" class="menu-panel" style="display: none;">
+        <h2>⚙️ 後台設定</h2>
+        
+        <div class="admin-row">
+            <label>Apps Script API 網址<br><span style="font-size:14px;color:#aaa;font-weight:normal;">(讀取設定與排行榜)</span></label>
+            <input type="text" id="sheetUrlInput" value="https://script.google.com/macros/s/AKfycbwDPduJus2tdJfT45a3eS3a3KNWtLXZ62tljsOOULqGyy1R4_cI94Kbt-TPxEWSj-4J/exec" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+        
+        <div class="admin-row">
+            <label>遊戲時間 (秒) <br><span style="font-size:14px;color:#aaa;font-weight:normal;">(將優先讀取 Sheet 設定)</span></label>
+            <input type="number" id="adminTime" value="45" min="10" max="300">
+        </div>
+        <div class="admin-row">
+            <label>水果速度</label>
+            <select id="adminSpeed" style="width: 150px;">
+                <option value="0.4">1 (極慢)</option>
+                <option value="0.6">2</option>
+                <option value="0.8" selected>3 (預設)</option>
+                <option value="1.0">4</option>
+                <option value="1.2">5</option>
+                <option value="1.4">6</option>
+                <option value="1.6">7</option>
+                <option value="1.8">8</option>
+                <option value="2.1">9</option>
+                <option value="2.5">10 (極快)</option>
+            </select>
+        </div>
+        <div class="admin-row">
+            <label>背景音樂 (長播)</label>
+            <input type="file" id="bgmUpload" accept="audio/*">
+        </div>
+        <div class="admin-row">
+            <label>切擊聲效 (可選)</label>
+            <input type="file" id="sliceSoundUpload" accept="audio/*">
+        </div>
+        <div class="admin-row">
+            <label>爆炸聲效 (可選)</label>
+            <input type="file" id="bombSoundUpload" accept="audio/*">
+        </div>
+        
+        <button class="action-btn btn-success" onclick="closeAdmin()">儲存並返回</button>
+    </div>
+
+    <!-- 遊戲進行中的 UI -->
     <div id="ui" style="display: none;">
         <div id="scoreBox">分數: <span id="score">0</span></div>
-        <div id="questionBox">請切出答案: <span id="question"></span> = ?</div>
-        <div id="timeBox">時間: <span id="time">60</span>s</div>
+        <div id="questionBox">目標：<span id="question"></span></div>
+        <div id="timeBox">時間: <span id="time">45</span>s</div>
     </div>
     
-    <div id="version">V3</div>
+    <!-- 左下角版本號 -->
+    <div id="version">V23</div>
 
-    <div id="gameOver" style="display: none;">
+    <!-- 遊戲結束畫面與排行榜 -->
+    <div id="gameOver" class="menu-panel" style="display: none;">
         <h1>時間到！</h1>
-        <p>最終分數: <span id="finalScore">0</span></p>
-        <button onclick="location.reload()">再玩一次</button>
+        <p>最終分數: <span id="finalScore" style="color: #2ecc71; font-size: 36px; font-weight: bold;">0</span></p>
+        
+        <div id="submitForm" class="submit-group">
+            <input type="text" id="playerClass" placeholder="班別 (例: 1A)" maxlength="10">
+            <input type="text" id="playerSid" placeholder="學號 (例: 01)" maxlength="10">
+            <input type="text" id="playerName" placeholder="名字 (例: 陳小明)" maxlength="20">
+            <button class="action-btn btn-success" onclick="submitScore()">上傳成績並查看排行榜</button>
+        </div>
+
+        <div id="leaderboardDisplay" class="leaderboard-container" style="display:none;">
+            <h3>🏆 總排行榜 (Top 10) 🏆</h3>
+            <ol id="leaderboardList"></ol>
+        </div>
+
+        <button class="action-btn" onclick="resetToMainMenu()">回主選單</button>
     </div>
+
     <canvas id="gameCanvas"></canvas>
     
-    <script src="game.js"></script>
+    <script>
+        // =========================================================================
+        // 🎵 預設音效設定區 (Base64 格式) 🎵
+        // 為了讓所有裝置都能聽到音樂（避免 Google Drive 阻擋），請將 MP3 轉成純文字代碼貼在此處。
+        // 轉換教學：
+        // 1. 前往網站：https://base64.guru/converter/encode/audio
+        // 2. 上傳你的 MP3 檔案，在 Output format 選擇 "Data URI - data:audio/..."
+        // 3. 點擊 Encode，將下方出現的超長代碼複製起來。
+        // 4. 貼到下面對應的雙引號 "" 裡面即可！
+        // =========================================================================
+        
+        // 請貼入背景音樂的 Base64 代碼 (例: "data:audio/mpeg;base64,...")
+        const DEFAULT_BGM_BASE64 = ""; 
+        
+        // 請貼入切擊聲效的 Base64 代碼 (例: "data:audio/mpeg;base64,...")
+        const DEFAULT_SLICE_BASE64 = ""; 
+        
+        // =========================================================================
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let audioCtx;
+        let splashNoiseBuffer;
+        let customSliceBuffer = null; 
+        let customBombBuffer = null; 
+
+        const bgmPlayer = new Audio();
+        bgmPlayer.loop = true;
+        
+        const dbName = "FruitNinjaDB";
+        const storeName = "settingsStore";
+        let localDB;
+
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, 2);
+                request.onerror = (event) => reject("IndexedDB 開啟失敗");
+                request.onupgradeneeded = (event) => {
+                    localDB = event.target.result;
+                    if (!localDB.objectStoreNames.contains(storeName)) {
+                        localDB.createObjectStore(storeName);
+                    }
+                };
+                request.onsuccess = (event) => {
+                    localDB = event.target.result;
+                    resolve();
+                };
+            });
+        }
+
+        function saveToDB(key, data) {
+            if (!localDB) return;
+            const transaction = localDB.transaction([storeName], "readwrite");
+            const store = transaction.objectStore(storeName);
+            store.put(data, key);
+        }
+
+        function loadFromDB(key) {
+            return new Promise((resolve, reject) => {
+                if (!localDB) { resolve(null); return; }
+                const transaction = localDB.transaction([storeName], "readonly");
+                const store = transaction.objectStore(storeName);
+                const request = store.get(key);
+                request.onsuccess = (event) => resolve(event.target.result);
+                request.onerror = (event) => resolve(null);
+            });
+        }
+
+        async function loadSheetSettings(url) {
+            if(!url) return;
+            try {
+                const separator = url.includes('?') ? '&' : '?';
+                const res = await fetch(url + separator + 'action=getSettings');
+                const data = await res.json();
+                parseJSONData(data);
+            } catch(e) {
+                console.warn("無法載入 API 設定。此訊息可忽略，系統將使用預設難度：", e.message);
+            }
+        }
+
+        const difficultySettings = {
+            'C':   { shortText: '2的倍數', min: 1, max: 100, add: 10, sub: 5, condition: (n) => n % 2 === 0 },
+            'B':   { shortText: '3的倍數', min: 1, max: 100, add: 12, sub: 6, condition: (n) => n % 3 === 0 },
+            'A':   { shortText: '4的倍數', min: 1, max: 100, add: 14, sub: 7, condition: (n) => n % 4 === 0 },
+            'S':   { shortText: '6的倍數', min: 1, max: 100, add: 16, sub: 8, condition: (n) => n % 6 === 0 },
+            'SS':  { shortText: '4的倍數', min: 100, max: 200, add: 20, sub: 10, condition: (n) => n % 4 === 0 },
+            'SSR': { shortText: '6的倍數', min: 100, max: 200, add: 24, sub: 12, condition: (n) => n % 6 === 0 },
+            'SSS': { shortText: '7的倍數 或 質數', min: 50, max: 200, add: 30, sub: 15, condition: (n) => n % 7 === 0 || isPrime(n) }
+        };
+
+        function parseJSONData(data) {
+            if (!data || !data.length) return;
+            for(let i = 1; i < data.length; i++) {
+                let cols = data[i];
+                if(cols.length >= 7) {
+                    let diff = String(cols[0]).toUpperCase().trim();
+                    if(difficultySettings[diff]) {
+                        difficultySettings[diff].shortText = String(cols[1]).trim();
+                        difficultySettings[diff].min = parseInt(cols[2]) || 1;
+                        difficultySettings[diff].max = parseInt(cols[3]) || 100;
+                        difficultySettings[diff].add = parseInt(cols[4]) || 10;
+                        difficultySettings[diff].sub = parseInt(cols[5]) || 5;
+                        
+                        let rule = String(cols[6]).toLowerCase().trim();
+                        if(rule.startsWith('mult:')) {
+                            let val = parseInt(rule.split(':')[1]);
+                            difficultySettings[diff].condition = (n) => n % val === 0;
+                        } else if (rule.startsWith('prime_mult:')) {
+                            let val = parseInt(rule.split(':')[1]);
+                            difficultySettings[diff].condition = (n) => n % val === 0 || isPrime(n);
+                        }
+                        
+                        if (cols.length >= 8 && cols[7] !== "") {
+                            let parsedTime = parseInt(cols[7]);
+                            if (!isNaN(parsedTime) && parsedTime > 0) {
+                                gameTimeSetting = parsedTime;
+                                document.getElementById('adminTime').value = gameTimeSetting;
+                            }
+                        }
+                    }
+                }
+            }
+            updateDifficultyButtonsUI();
+        }
+
+        function updateDifficultyButtonsUI() {
+            const btns = document.querySelectorAll('.diff-btn');
+            btns.forEach(btn => {
+                const diff = btn.getAttribute('data-diff');
+                if (difficultySettings[diff]) {
+                    btn.innerText = `${diff}: ${difficultySettings[diff].shortText} (${difficultySettings[diff].min}-${difficultySettings[diff].max})`;
+                }
+            });
+        }
+
+        function applyBgm(arrayBuffer) {
+            const blob = new Blob([arrayBuffer]);
+            const objectURL = URL.createObjectURL(blob);
+            bgmPlayer.src = objectURL;
+        }
+
+        function applySliceSound(arrayBuffer) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioCtx.decodeAudioData(arrayBuffer.slice(0), function(buffer) {
+                customSliceBuffer = buffer;
+            }, function(error) {
+                console.log("切擊音效解碼失敗：", error);
+            });
+        }
+
+        function applyBombSound(arrayBuffer) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioCtx.decodeAudioData(arrayBuffer.slice(0), function(buffer) {
+                customBombBuffer = buffer;
+            }, function(error) {
+                console.log("爆炸音效解碼失敗：", error);
+            });
+        }
+
+        initIndexedDB().then(async () => {
+            let sheetUrl = await loadFromDB('sheetUrl');
+            if (sheetUrl) {
+                document.getElementById('sheetUrlInput').value = sheetUrl;
+            } else {
+                sheetUrl = document.getElementById('sheetUrlInput').value.trim();
+            }
+            
+            if (sheetUrl) {
+                loadSheetSettings(sheetUrl);
+            }
+
+            // 處理背景音樂載入機制
+            const bgmBuf = await loadFromDB('bgm');
+            if (bgmBuf) {
+                applyBgm(bgmBuf);
+            } else if (DEFAULT_BGM_BASE64 !== "") {
+                bgmPlayer.src = DEFAULT_BGM_BASE64;
+            }
+
+            // 處理切擊聲效載入機制
+            const sliceBuf = await loadFromDB('sliceSound');
+            if (sliceBuf) {
+                applySliceSound(sliceBuf);
+            } else if (DEFAULT_SLICE_BASE64 !== "") {
+                fetch(DEFAULT_SLICE_BASE64)
+                    .then(res => res.arrayBuffer())
+                    .then(buffer => applySliceSound(buffer))
+                    .catch(e => console.log('預設 Base64 切擊音效載入失敗', e));
+            }
+
+            const bombBuf = await loadFromDB('bombSound');
+            if (bombBuf) applyBombSound(bombBuf);
+        });
+
+        document.getElementById('bgmUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const arrayBuffer = ev.target.result;
+                    saveToDB('bgm', arrayBuffer);
+                    applyBgm(arrayBuffer);
+                    bgmPlayer.play().catch(e => console.log("BGM 播放失敗：", e));
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        document.getElementById('sliceSoundUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const arrayBuffer = ev.target.result;
+                    saveToDB('sliceSound', arrayBuffer);
+                    applySliceSound(arrayBuffer);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        document.getElementById('bombSoundUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const arrayBuffer = ev.target.result;
+                    saveToDB('bombSound', arrayBuffer);
+                    applyBombSound(arrayBuffer);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        function playSliceSound(isBomb) {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const bufferSize = audioCtx.sampleRate * 0.5; 
+                    splashNoiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                    const data = splashNoiseBuffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const t = audioCtx.currentTime;
+
+                if (isBomb) {
+                    if (customBombBuffer) {
+                        const source = audioCtx.createBufferSource();
+                        source.buffer = customBombBuffer;
+                        source.connect(audioCtx.destination);
+                        source.start(0);
+                    } else {
+                        const osc = audioCtx.createOscillator();
+                        const gainNode = audioCtx.createGain();
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(100, t);
+                        osc.frequency.exponentialRampToValueAtTime(20, t + 0.5);
+                        
+                        gainNode.gain.setValueAtTime(0, t);
+                        gainNode.gain.linearRampToValueAtTime(1, t + 0.05); 
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.5); 
+
+                        const boomNoise = audioCtx.createBufferSource();
+                        boomNoise.buffer = splashNoiseBuffer;
+                        const noiseFilter = audioCtx.createBiquadFilter();
+                        noiseFilter.type = 'lowpass';
+                        noiseFilter.frequency.setValueAtTime(800, t);
+                        noiseFilter.frequency.exponentialRampToValueAtTime(100, t + 0.5);
+                        
+                        boomNoise.connect(noiseFilter);
+                        noiseFilter.connect(gainNode); 
+                        osc.connect(gainNode);
+                        gainNode.connect(audioCtx.destination);
+                        
+                        osc.start(t);
+                        boomNoise.start(t);
+                        osc.stop(t + 0.5);
+                        boomNoise.stop(t + 0.5);
+                    }
+                } else {
+                    if (customSliceBuffer) {
+                        const source = audioCtx.createBufferSource();
+                        source.buffer = customSliceBuffer;
+                        source.connect(audioCtx.destination);
+                        source.start(0);
+                    } else {
+                        // 當沒有上傳自訂音效也沒貼 Base64 時，確保使用內建安全合成音，永不失效
+                        const swooshOsc = audioCtx.createOscillator();
+                        const swooshGain = audioCtx.createGain();
+                        swooshOsc.type = 'sine';
+                        swooshOsc.frequency.setValueAtTime(1500, t);
+                        swooshOsc.frequency.exponentialRampToValueAtTime(300, t + 0.1);
+                        swooshGain.gain.setValueAtTime(0, t);
+                        swooshGain.gain.linearRampToValueAtTime(0.4, t + 0.01);
+                        swooshGain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                        swooshOsc.connect(swooshGain);
+                        swooshGain.connect(audioCtx.destination);
+                        swooshOsc.start(t);
+                        swooshOsc.stop(t + 0.1);
+
+                        const noiseSource = audioCtx.createBufferSource();
+                        noiseSource.buffer = splashNoiseBuffer;
+                        const splashFilter = audioCtx.createBiquadFilter();
+                        splashFilter.type = 'lowpass';
+                        splashFilter.frequency.setValueAtTime(1500, t);
+                        splashFilter.frequency.exponentialRampToValueAtTime(200, t + 0.25);
+
+                        const splashGain = audioCtx.createGain();
+                        splashGain.gain.setValueAtTime(0, t);
+                        splashGain.gain.linearRampToValueAtTime(0.7, t + 0.02);
+                        splashGain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+                        
+                        noiseSource.connect(splashFilter);
+                        splashFilter.connect(splashGain);
+                        splashGain.connect(audioCtx.destination);
+                        noiseSource.start(t);
+                        noiseSource.stop(t + 0.25);
+                        
+                        const thumpOsc = audioCtx.createOscillator();
+                        const thumpGain = audioCtx.createGain();
+                        thumpOsc.type = 'triangle';
+                        thumpOsc.frequency.setValueAtTime(400, t);
+                        thumpOsc.frequency.exponentialRampToValueAtTime(50, t + 0.15);
+                        thumpGain.gain.setValueAtTime(0, t);
+                        thumpGain.gain.linearRampToValueAtTime(0.6, t + 0.02);
+                        thumpGain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+                        
+                        thumpOsc.connect(thumpGain);
+                        thumpGain.connect(audioCtx.destination);
+                        thumpOsc.start(t);
+                        thumpOsc.stop(t + 0.15);
+                    }
+                }
+            } catch(e) {
+                console.log('Audio API 尚未就緒或不支援');
+            }
+        }
+
+        function isPrime(num) {
+            if (num <= 1) return false;
+            if (num <= 3) return true;
+            if (num % 2 === 0 || num % 3 === 0) return false;
+            for (let i = 5; i * i <= num; i += 6) {
+                if (num % i === 0 || num % (i + 2) === 0) return false;
+            }
+            return true;
+        }
+
+        function generateFruitNumber(difficulty, wantTarget) {
+            let config = difficultySettings[difficulty];
+            if (!config) config = difficultySettings['C']; 
+            let num;
+            let attempts = 0;
+            do {
+                num = Math.floor(Math.random() * (config.max - config.min + 1)) + config.min;
+                attempts++;
+            } while (config.condition(num) !== wantTarget && attempts < 1000);
+            return num;
+        }
+
+        let currentDifficulty = 'C';
+        const difficultyButtons = document.querySelectorAll('.diff-btn');
+        difficultyButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                difficultyButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentDifficulty = this.getAttribute('data-diff');
+            });
+        });
+
+        let gameTimeSetting = 45; 
+        let gameSpeedMultiplier = 0.8; 
+        
+        let score = 0;
+        let timeLeft = 45;
+        let timerInterval = null;
+        let fruitSpawnInterval = null;
+        let fruits = [];
+        let particles = []; 
+        let splatters = []; 
+        let floatingTexts = []; 
+        let sparks = []; 
+        let bladeTrail = [];
+        let slashMarks = []; 
+        let shockwaves = []; 
+        let isDrawing = false;
+        let gameActive = false; 
+        
+        const MAX_SPLATTERS = 200;
+
+        const scoreEl = document.getElementById('score');
+        const questionEl = document.getElementById('question');
+        const timeEl = document.getElementById('time');
+        const gameOverEl = document.getElementById('gameOver');
+        const finalScoreEl = document.getElementById('finalScore');
+        const startMenuEl = document.getElementById('startMenu');
+        const adminMenuEl = document.getElementById('adminMenu');
+        const uiEl = document.getElementById('ui');
+
+        const fruitImages = [];
+        const imageSrcs = [
+            'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f34e.png', 
+            'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f34a.png', 
+            'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f349.png', 
+            'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f34c.png', 
+            'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f347.png', 
+            'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f353.png', 
+            'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f351.png', 
+            'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f34d.png', 
+            'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f34b.png', 
+            'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f352.png', 
+            'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f95d.png'  
+        ];
+
+        const fruitColors = [
+            '#e74c3c', '#e67e22', '#2ecc71', '#f1c40f', '#9b59b6', '#e74c3c', '#ff7f50', '#f1c40f', '#fff200', '#c0392b', '#8bc34a'  
+        ];
+
+        imageSrcs.forEach(src => {
+            let img = new Image();
+            img.src = src;
+            fruitImages.push(img);
+        });
+
+        const bombImage = new Image();
+        bombImage.src = 'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f4a3.png';
+
+        window.openAdmin = function() {
+            startMenuEl.style.display = 'none';
+            adminMenuEl.style.display = 'block';
+        }
+
+        window.closeAdmin = function() {
+            gameTimeSetting = parseInt(document.getElementById('adminTime').value) || 45;
+            gameSpeedMultiplier = parseFloat(document.getElementById('adminSpeed').value) || 0.8;
+
+            const url = document.getElementById('sheetUrlInput').value.trim();
+            saveToDB('sheetUrl', url);
+            if(url) {
+                loadSheetSettings(url);
+            }
+
+            adminMenuEl.style.display = 'none';
+            startMenuEl.style.display = 'block';
+        }
+
+        async function submitScore() {
+            let cls = document.getElementById('playerClass').value.trim();
+            let sid = document.getElementById('playerSid').value.trim();
+            let name = document.getElementById('playerName').value.trim();
+            
+            if(!cls || !sid || !name) {
+                alert("請填寫班別、學號與名字！");
+                return;
+            }
+
+            let url = document.getElementById('sheetUrlInput').value.trim();
+            if(!url) {
+                alert("管理員尚未在後台設定 Google Apps Script API 網址，無法上傳分數！");
+                return;
+            }
+
+            document.getElementById('submitForm').style.display = 'none';
+            document.getElementById('leaderboardDisplay').style.display = 'block';
+            document.getElementById('leaderboardList').innerHTML = '<li>上傳與讀取中，請稍候...</li>';
+
+            let now = new Date();
+            let dateStr = now.toLocaleDateString('zh-TW');
+            let timeStr = now.toLocaleTimeString('zh-TW');
+
+            try {
+                const separator = url.includes('?') ? '&' : '?';
+                
+                let addUrl = `${url}${separator}action=addScore&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}&diff=${encodeURIComponent(currentDifficulty)}&cls=${encodeURIComponent(cls)}&sid=${encodeURIComponent(sid)}&name=${encodeURIComponent(name)}&score=${score}`;
+                fetch(addUrl).catch(e => console.warn("背景上傳失敗：", e));
+                
+                let getUrl = `${url}${separator}action=getLeaderboard`;
+                let res = await fetch(getUrl);
+                let data = await res.json();
+                
+                data.push({
+                    cls: cls,
+                    name: name,
+                    score: score,
+                    diff: currentDifficulty
+                });
+                
+                data.sort((a, b) => b.score - a.score);
+                data = data.slice(0, 10);
+                
+                let html = '';
+                data.forEach((row) => {
+                    let isMe = (row.name === name && row.score === score && row.cls === cls);
+                    let rowStyle = isMe ? 'background: rgba(46, 204, 113, 0.2); border-radius: 5px;' : '';
+                    
+                    html += `<li style="${rowStyle} padding: 6px; border-bottom: 1px dashed #555;">
+                        ${row.cls} ${row.name} 
+                        <span class="leaderboard-highlight">${row.score} 分</span> 
+                        <span style="font-size:16px;color:#aaa;">(${row.diff})</span>
+                    </li>`;
+                });
+                document.getElementById('leaderboardList').innerHTML = html;
+                
+            } catch(e) {
+                console.warn("上傳/讀取成績失敗：", e.message);
+                document.getElementById('leaderboardList').innerHTML = '<li>上傳/讀取失敗，請檢查網路或 API 網址設定。</li>';
+            }
+        }
+
+        class SlashMark {
+            constructor(x, y, angle) {
+                this.x = x;
+                this.y = y;
+                this.angle = angle;
+                this.length = 120 + Math.random() * 150;
+            }
+            update() {}
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.globalAlpha = 0.8;
+                
+                ctx.beginPath();
+                ctx.moveTo(-this.length/2, 0);
+                ctx.lineTo(this.length/2, 0);
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = 'rgba(20, 10, 0, 0.7)';
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(-this.length/2, 2);
+                ctx.lineTo(this.length/2, 2);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgba(255, 200, 100, 0.2)';
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        }
+
+        class Shockwave {
+            constructor(x, y, color, isBomb = false) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.radius = 10;
+                this.life = 1.0;
+                this.isBomb = isBomb; 
+            }
+            update() {
+                this.radius += (this.isBomb ? 30 : 18) * gameSpeedMultiplier; 
+                this.life -= (this.isBomb ? 0.04 : 0.06) * gameSpeedMultiplier;
+            }
+            draw() {
+                if (this.life <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, Math.max(0, this.radius), 0, Math.PI * 2);
+                ctx.lineWidth = (this.isBomb ? 20 : 10) * this.life; 
+                ctx.strokeStyle = this.color;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        class Spark {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.life = 1.0;
+                this.size = Math.random() * 4 + 2;
+                this.rotation = Math.random() * Math.PI * 2;
+            }
+            update() {
+                this.x += this.vx * gameSpeedMultiplier;
+                this.y += this.vy * gameSpeedMultiplier;
+                this.life -= 0.03;
+                this.rotation += 0.1;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter'; 
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = '#FFE600'; 
+                
+                ctx.beginPath();
+                ctx.moveTo(0, -this.size);
+                ctx.lineTo(this.size * 0.3, -this.size * 0.3);
+                ctx.lineTo(this.size, 0);
+                ctx.lineTo(this.size * 0.3, this.size * 0.3);
+                ctx.lineTo(0, this.size);
+                ctx.lineTo(-this.size * 0.3, this.size * 0.3);
+                ctx.lineTo(-this.size, 0);
+                ctx.lineTo(-this.size * 0.3, -this.size * 0.3);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        class ScorchMark {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.radius = 80 + Math.random() * 40;
+                
+                this.blobs = [];
+                let numBlobs = 5 + Math.floor(Math.random() * 4);
+                for(let i=0; i<numBlobs; i++) {
+                    this.blobs.push({
+                        x: (Math.random() - 0.5) * 40,
+                        y: (Math.random() - 0.5) * 40,
+                        r: 20 + Math.random() * 30
+                    });
+                }
+            }
+            update() {}
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.globalAlpha = 0.85;
+                
+                let grad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
+                grad.addColorStop(0, 'rgba(40, 40, 40, 0.95)'); 
+                grad.addColorStop(0.5, 'rgba(60, 60, 60, 0.8)'); 
+                grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = 'rgba(50, 50, 50, 0.8)';
+                this.blobs.forEach(b => {
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                ctx.restore();
+            }
+        }
+
+        class Splatter {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.alpha = 0.8; 
+                
+                let scale = 1.5 + Math.random() * 1.0;
+                
+                this.blobs = [];
+                let numBlobs = 4 + Math.floor(Math.random() * 5); 
+                for(let i=0; i<numBlobs; i++) {
+                    this.blobs.push({
+                        x: (Math.random() - 0.5) * 30 * scale,
+                        y: (Math.random() - 0.5) * 30 * scale,
+                        r: (15 + Math.random() * 25) * scale
+                    });
+                }
+                
+                this.droplets = [];
+                let numDroplets = 8 + Math.floor(Math.random() * 6); 
+                for(let i=0; i<numDroplets; i++) {
+                    let angle = Math.random() * Math.PI * 2;
+                    let dist = (20 + Math.random() * 50) * scale; 
+                    this.droplets.push({
+                        x: Math.cos(angle) * dist,
+                        y: Math.sin(angle) * dist,
+                        rx: (Math.random() * 10 + 5) * scale, 
+                        ry: (Math.random() * 3 + 1.5) * scale,
+                        angle: angle 
+                    });
+                }
+            }
+            
+            update() {}
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                
+                this.blobs.forEach(b => {
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                this.droplets.forEach(d => {
+                    ctx.beginPath();
+                    ctx.ellipse(d.x, d.y, d.rx, d.ry, d.angle, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                ctx.restore();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color, isBomb = false) {
+                this.x = x;
+                this.y = y;
+                let speedMod = isBomb ? 2.0 : 1.0; 
+                this.vx = (Math.random() - 0.5) * 35 * speedMod;
+                this.vy = (Math.random() - 0.5) * 35 * speedMod;
+                this.life = 1.0; 
+                this.size = (Math.random() * 6 + 4) * (isBomb ? 1.5 : 1); 
+                this.color = color;
+            }
+            update() {
+                this.x += this.vx * gameSpeedMultiplier;
+                this.y += this.vy * gameSpeedMultiplier;
+                this.vy += 0.8 * gameSpeedMultiplier; 
+                this.life -= 0.025; 
+            }
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter'; 
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = this.size;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - this.vx * 1.5, this.y - this.vy * 1.5);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        class FloatingText {
+            constructor(x, y, text, color) {
+                this.x = x;
+                this.y = y;
+                this.text = text;
+                this.color = color;
+                this.life = 1.0;
+                this.vy = -1.5; 
+            }
+            update() {
+                this.y += this.vy * gameSpeedMultiplier;
+                this.life -= 0.015;
+            }
+            draw() {
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.font = "bold 42px Arial"; 
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.strokeStyle = "white";
+                ctx.lineWidth = 4;
+                ctx.strokeText(this.text, this.x, this.y);
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        class Fruit {
+            constructor(x, y, vx, vy, number, isSpecial = false, isBomb = false, isTarget = false) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                
+                this.isSpecialBanana = isSpecial;
+                this.isBomb = isBomb;
+                this.isTarget = isTarget; 
+                
+                this.radius = this.isBomb ? 85 : 65; 
+                this.number = number;
+                
+                if (this.isBomb) {
+                    this.image = bombImage; 
+                    this.juiceColor = '#333333'; 
+                } else if (this.isSpecialBanana) {
+                    this.image = fruitImages[3]; 
+                    this.juiceColor = fruitColors[3]; 
+                } else {
+                    let availableIndices = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10];
+                    let rIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+                    this.image = fruitImages[rIndex];
+                    this.juiceColor = fruitColors[rIndex]; 
+                }
+                
+                this.rotation = Math.random() * Math.PI * 2; 
+                this.rotationSpeed = (Math.random() - 0.5) * 0.05; 
+            }
+
+            update() {
+                this.x += this.vx * gameSpeedMultiplier;
+                this.y += this.vy * gameSpeedMultiplier;
+                this.vy += 0.05 * gameSpeedMultiplier; 
+                this.rotation += this.rotationSpeed * gameSpeedMultiplier; 
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                if (this.isSpecialBanana) {
+                    ctx.shadowBlur = 25;
+                    ctx.shadowColor = '#f1c40f';
+                } else if (this.isBomb) {
+                    let pulse = Math.abs(Math.sin(Date.now() / 150)); 
+                    ctx.shadowBlur = 30 + pulse * 40; 
+                    ctx.shadowColor = `rgba(255, 0, 0, ${0.8 + pulse * 0.2})`; 
+                    
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius * (1.1 + pulse * 0.2), 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 0, 0, ${0.4 * pulse})`;
+                    ctx.fill();
+                }
+
+                if (this.image && this.image.complete && this.image.naturalHeight !== 0) {
+                    ctx.drawImage(this.image, -this.radius, -this.radius, this.radius * 2, this.radius * 2);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.juiceColor;
+                    ctx.fill();
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = 'black';
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                if (!this.isBomb) {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    
+                    if (this.isSpecialBanana) {
+                        ctx.shadowBlur = 0; 
+                        ctx.fillStyle = '#f1c40f';
+                        ctx.beginPath();
+                        ctx.arc(this.radius * 0.7, -this.radius * 0.7, 22, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+
+                        ctx.fillStyle = '#000';
+                        ctx.font = 'bold 22px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('x2', this.radius * 0.7, -this.radius * 0.7);
+                    }
+                    
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 40px Arial'; 
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 5;
+                    ctx.strokeText(this.number, 0, 0); 
+                    ctx.fillText(this.number, 0, 0);
+
+                    if ([6, 9, 66, 99].includes(this.number)) {
+                        let textWidth = ctx.measureText(this.number).width;
+                        ctx.beginPath();
+                        ctx.moveTo(-textWidth / 2 - 4, 24);
+                        ctx.lineTo(textWidth / 2 + 4, 24);
+                        ctx.lineWidth = 5;
+                        ctx.strokeStyle = 'black';
+                        ctx.stroke();
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = 'white';
+                        ctx.stroke();
+                    }
+                    
+                    ctx.restore(); 
+                }
+            }
+        }
+
+        window.startGame = function() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            startMenuEl.style.display = 'none';
+            gameOverEl.style.display = 'none';
+            uiEl.style.display = 'flex';
+            
+            timeLeft = gameTimeSetting;
+            timeEl.innerText = timeLeft;
+            questionEl.innerHTML = difficultySettings[currentDifficulty].shortText;
+            
+            if (bgmPlayer.src && bgmPlayer.src !== window.location.href && bgmPlayer.paused) {
+                bgmPlayer.play().catch(e => console.log("BGM 播放失敗：", e));
+            }
+            
+            gameActive = true;
+            score = 0;
+            scoreEl.innerText = score;
+            fruits = [];
+            particles = [];
+            splatters = []; 
+            slashMarks = []; 
+            floatingTexts = [];
+            sparks = []; 
+            bladeTrail = [];
+            shockwaves = []; 
+            
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timeEl.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+            
+            if(fruitSpawnInterval) clearInterval(fruitSpawnInterval);
+            fruitSpawnInterval = setInterval(spawnFruits, 1000); 
+        }
+
+        window.resetToMainMenu = function() {
+            gameOverEl.style.display = 'none';
+            startMenuEl.style.display = 'block';
+            uiEl.style.display = 'none';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(timerInterval);
+            clearInterval(fruitSpawnInterval);
+            gameOverEl.style.display = 'block';
+            finalScoreEl.innerText = score;
+
+            document.getElementById('submitForm').style.display = 'flex';
+            document.getElementById('leaderboardDisplay').style.display = 'none';
+        }
+
+        function spawnFruits() {
+            if (!gameActive) return;
+            
+            let currentFruitCount = fruits.length;
+            if (currentFruitCount >= 10) return; 
+
+            let maxToSpawn = 10 - currentFruitCount;
+            let numberOfFruits = Math.min(Math.floor(Math.random() * 4) + 1, maxToSpawn); 
+            if (numberOfFruits > 4) numberOfFruits = 4;
+            
+            if (numberOfFruits <= 0) return;
+
+            let correctPushed = false;
+
+            for (let i = 0; i < numberOfFruits; i++) {
+                let startX = canvas.width * 0.2 + Math.random() * (canvas.width * 0.6); 
+                let startY = -100; 
+                
+                let vx = (Math.random() - 0.5) * 6.0; 
+                let vy = Math.random() * 3.0 + 2.0; 
+                
+                let isSpecial = false;
+                let isBomb = false;
+                let isTarget = false;
+
+                if (!correctPushed && i === numberOfFruits - 1) {
+                    isTarget = true;
+                    correctPushed = true;
+                    if (Math.random() < 0.15) isSpecial = true;
+                } else {
+                    let rand = Math.random();
+                    if (rand < 0.15) {
+                        isBomb = true;
+                    } else if (rand < 0.575) {
+                        isTarget = true;
+                        correctPushed = true;
+                        if (Math.random() < 0.15) isSpecial = true;
+                    } else {
+                        isTarget = false;
+                        if (Math.random() < 0.15) isSpecial = true;
+                    }
+                }
+
+                let number = 0;
+                if (!isBomb) {
+                    number = generateFruitNumber(currentDifficulty, isTarget);
+                }
+
+                fruits.push(new Fruit(startX, startY, vx, vy, number, isSpecial, isBomb, isTarget));
+            }
+        }
+
+        function createExplosion(x, y, color, isBomb = false) {
+            if (isBomb) {
+                shockwaves.push(new Shockwave(x, y, '#ff4500', true));
+                let innerWave = new Shockwave(x, y, '#ff0000', true);
+                innerWave.radius = -20; 
+                shockwaves.push(innerWave);
+
+                for (let i = 0; i < 60; i++) {
+                    let bombColor = Math.random() > 0.6 ? '#ff4500' : (Math.random() > 0.5 ? '#555555' : '#ff0000');
+                    particles.push(new Particle(x, y, bombColor, true));
+                }
+                
+                splatters.push(new ScorchMark(x, y));
+            } else {
+                shockwaves.push(new Shockwave(x, y, color));
+                for (let i = 0; i < 40; i++) {
+                    particles.push(new Particle(x, y, color));
+                }
+                splatters.push(new Splatter(x, y, color));
+            }
+
+            if (particles.length > 200) {
+                particles.splice(0, particles.length - 200);
+            }
+            if (splatters.length > MAX_SPLATTERS) {
+                splatters.shift(); 
+            }
+            if (shockwaves.length > 10) {
+                shockwaves.shift();
+            }
+        }
+
+        function getPos(e) {
+            let rect = canvas.getBoundingClientRect();
+            if (e.touches && e.touches.length > 0) {
+                return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+            }
+            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        }
+
+        function handleInputStart(e) { 
+            isDrawing = true; 
+            bladeTrail = []; 
+            if(e.type === 'touchstart') e.preventDefault(); 
+        }
+        function handleInputEnd() { isDrawing = false; bladeTrail = []; }
+        function handleInputMove(e) {
+            if (!isDrawing || !gameActive) return;
+            if(e.type === 'touchmove') e.preventDefault();
+
+            let pos = getPos(e);
+            bladeTrail.push(pos);
+            if (bladeTrail.length > 15) bladeTrail.shift();
+            
+            if (Math.random() > 0.4) {
+                sparks.push(new Spark(pos.x, pos.y));
+                if (sparks.length > 50) sparks.shift();
+            }
+            
+            checkCollision(pos.x, pos.y);
+        }
+
+        canvas.addEventListener('mousedown', handleInputStart);
+        canvas.addEventListener('mousemove', handleInputMove);
+        window.addEventListener('mouseup', handleInputEnd); 
+        canvas.addEventListener('touchstart', handleInputStart, {passive: false});
+        canvas.addEventListener('touchmove', handleInputMove, {passive: false});
+        window.addEventListener('touchend', handleInputEnd);
+
+        function checkCollision(mx, my) {
+            for (let i = fruits.length - 1; i >= 0; i--) {
+                let f = fruits[i];
+                let dx = mx - f.x;
+                let dy = my - f.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < f.radius) {
+                    playSliceSound(f.isBomb);
+                    
+                    let angle = 0;
+                    if (bladeTrail.length >= 2) {
+                        let p1 = bladeTrail[bladeTrail.length - 2];
+                        let p2 = bladeTrail[bladeTrail.length - 1];
+                        angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+                    }
+                    slashMarks.push(new SlashMark(f.x, f.y, angle));
+                    if (slashMarks.length > 100) slashMarks.shift();
+
+                    createExplosion(f.x, f.y, f.juiceColor, f.isBomb);
+
+                    let diffConfig = difficultySettings[currentDifficulty];
+
+                    if (f.isBomb) {
+                        score = 0;
+                        floatingTexts.push(new FloatingText(f.x, f.y, `歸零!`, "#ff0000"));
+                        
+                        document.body.classList.add('shake-active');
+                        setTimeout(() => {
+                            document.body.classList.remove('shake-active');
+                        }, 400);
+
+                        if (navigator.vibrate) {
+                            navigator.vibrate([300, 100, 300]);
+                        }
+                    } else if (f.isTarget) { 
+                        let gainedPoints = f.isSpecialBanana ? diffConfig.add * 2 : diffConfig.add;
+                        score += gainedPoints;
+                        floatingTexts.push(new FloatingText(f.x, f.y, `+${gainedPoints}`, "#2ecc71")); 
+                    } else {
+                        let lostPoints = f.isSpecialBanana ? diffConfig.sub * 2 : diffConfig.sub;
+                        score -= lostPoints;
+                        floatingTexts.push(new FloatingText(f.x, f.y, `-${lostPoints}`, "#e74c3c")); 
+                    }
+                    
+                    scoreEl.innerText = score;
+                    fruits.splice(i, 1);
+                }
+            }
+        }
+
+        function drawBlade() {
+            if (bladeTrail.length < 2) return;
+            
+            ctx.beginPath();
+            ctx.moveTo(bladeTrail[0].x, bladeTrail[0].y);
+            for (let i = 1; i < bladeTrail.length; i++) {
+                ctx.lineTo(bladeTrail[i].x, bladeTrail[i].y);
+            }
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = '#FF8C00'; 
+            ctx.strokeStyle = 'rgba(255, 140, 0, 0.7)'; 
+            ctx.lineWidth = 22; 
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(bladeTrail[0].x, bladeTrail[0].y);
+            for (let i = 1; i < bladeTrail.length; i++) {
+                ctx.lineTo(bladeTrail[i].x, bladeTrail[i].y);
+            }
+            ctx.shadowBlur = 10; 
+            ctx.shadowColor = '#FFFF00'; 
+            ctx.strokeStyle = '#FFFFFF'; 
+            ctx.lineWidth = 6; 
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            ctx.shadowBlur = 0; 
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameActive) {
+                for (let i = 0; i < splatters.length; i++) {
+                    splatters[i].update();
+                    splatters[i].draw();
+                }
+
+                for (let i = 0; i < slashMarks.length; i++) {
+                    slashMarks[i].update();
+                    slashMarks[i].draw();
+                }
+
+                for (let i = fruits.length - 1; i >= 0; i--) {
+                    fruits[i].update();
+                    fruits[i].draw();
+                    
+                    if (fruits[i].y > canvas.height + 150 || fruits[i].x < -200 || fruits[i].x > canvas.width + 200) {
+                        fruits.splice(i, 1);
+                    }
+                }
+
+                for (let i = shockwaves.length - 1; i >= 0; i--) {
+                    shockwaves[i].update();
+                    shockwaves[i].draw();
+                    if (shockwaves[i].life <= 0) {
+                        shockwaves.splice(i, 1);
+                    }
+                }
+
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    particles[i].update();
+                    particles[i].draw();
+                    if (particles[i].life <= 0) {
+                        particles.splice(i, 1);
+                    }
+                }
+
+                for (let i = sparks.length - 1; i >= 0; i--) {
+                    sparks[i].update();
+                    sparks[i].draw();
+                    if (sparks[i].life <= 0) {
+                        sparks.splice(i, 1);
+                    }
+                }
+
+                for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                    floatingTexts[i].update();
+                    floatingTexts[i].draw();
+                    if (floatingTexts[i].life <= 0) {
+                        floatingTexts.splice(i, 1);
+                    }
+                }
+
+                drawBlade();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        gameLoop();
+    </script>
 </body>
 </html>
