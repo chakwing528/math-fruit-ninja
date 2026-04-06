@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數學水果忍者 V25</title>
+    <title>數學水果忍者 V26</title>
     <style>
         body, html {
             margin: 0;
@@ -282,7 +282,7 @@
             border-radius: 10px;
             margin: 15px 0;
             text-align: left;
-            max-height: 250px;
+            max-height: 350px; /* 加大高度顯示更多玩家 */
             overflow-y: auto;
             border: 2px solid #f1c40f;
         }
@@ -303,7 +303,7 @@
         }
 
         .leaderboard-container li {
-            padding: 6px 0;
+            padding: 8px 0;
             border-bottom: 1px dashed #555;
             line-height: 1.4;
         }
@@ -416,7 +416,7 @@
     </div>
     
     <!-- 左下角版本號 -->
-    <div id="version">V25</div>
+    <div id="version">V26</div>
 
     <!-- 遊戲結束畫面與排行榜 -->
     <div id="gameOver" class="menu-panel" style="display: none;">
@@ -431,7 +431,7 @@
         </div>
 
         <div id="leaderboardDisplay" class="leaderboard-container" style="display:none;">
-            <h3>🏆 總排行榜 (Top 10) 🏆</h3>
+            <h3>🏆 總排行榜 (全體排名) 🏆</h3>
             <ol id="leaderboardList"></ol>
         </div>
 
@@ -446,7 +446,7 @@
         // 請將你的音效檔案上傳至 GitHub，並與這個 index.html 放在同一個資料夾。
         // =========================================================================
         const DEFAULT_BGM_URL = "./bgm.mp3"; 
-        const DEFAULT_SLICE_URL = "./slice.m4a"; // 已修改：mp3 改為 m4a
+        const DEFAULT_SLICE_URL = "./slice.m4a"; 
         // =========================================================================
 
         const canvas = document.getElementById('gameCanvas');
@@ -462,11 +462,19 @@
         const bgmPlayer = new Audio();
         bgmPlayer.loop = true;
         
-        const dbName = "FruitNinjaDB";
-        const storeName = "settingsStore";
-        let localDB;
+        // 偵測頁面可見性，當退出網頁（切換分頁或縮小）時停止播放
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                bgmPlayer.pause();
+            } else {
+                // 如果是在遊戲中或選單中且已開始過 BGM，則恢復播放
+                if (bgmStarted && bgmPlayer.src) {
+                    bgmPlayer.play().catch(e => console.log("恢復播放音樂受阻"));
+                }
+            }
+        });
 
-        // 為了處理現代瀏覽器的 Autoplay 限制，使用者第一次點擊畫面時播放背景音樂
+        // 為了處理現代瀏覽器的 Autoplay 限制
         let bgmStarted = false;
         function handleGlobalClick() {
             if (!bgmStarted && bgmPlayer.src) {
@@ -475,6 +483,10 @@
                 }).catch(e => console.log("等待點擊觸發音效中..."));
             }
         }
+
+        const dbName = "FruitNinjaDB";
+        const storeName = "settingsStore";
+        let localDB;
 
         function initIndexedDB() {
             return new Promise((resolve, reject) => {
@@ -519,7 +531,7 @@
                 const data = await res.json();
                 parseJSONData(data);
             } catch(e) {
-                console.warn("無法載入 API 設定。此訊息可忽略，系統將使用預設難度：", e.message);
+                console.warn("無法載入 API 設定：", e.message);
             }
         }
 
@@ -582,7 +594,6 @@
             const blob = new Blob([arrayBuffer]);
             const objectURL = URL.createObjectURL(blob);
             bgmPlayer.src = objectURL;
-            // 載入後嘗試自動播放
             bgmPlayer.play().catch(e => console.log("已就緒，等待點擊播放音樂"));
         }
 
@@ -616,7 +627,6 @@
                 loadSheetSettings(sheetUrl);
             }
 
-            // 處理背景音樂載入機制
             const bgmBuf = await loadFromDB('bgm');
             if (bgmBuf) {
                 applyBgm(bgmBuf);
@@ -625,7 +635,6 @@
                 bgmPlayer.play().catch(e => console.log("已就緒，等待點擊播放音樂"));
             }
 
-            // 處理切擊聲效載入機制
             const sliceBuf = await loadFromDB('sliceSound');
             if (sliceBuf) {
                 applySliceSound(sliceBuf);
@@ -936,8 +945,8 @@
                     diff: currentDifficulty
                 });
                 
+                // 修改：依分數排序，但不做 slice(0, 10) 截斷，顯示全體排名
                 data.sort((a, b) => b.score - a.score);
-                data = data.slice(0, 10);
                 
                 let html = '';
                 data.forEach((row) => {
@@ -1352,7 +1361,6 @@
             timeEl.innerText = timeLeft;
             questionEl.innerHTML = difficultySettings[currentDifficulty].shortText;
             
-            // 遊戲開始時，如果音樂沒在播，則強制嘗試播放
             if (bgmPlayer.src && bgmPlayer.paused) {
                 bgmPlayer.play().catch(e => console.log("音樂播放受阻"));
             }
@@ -1408,11 +1416,8 @@
 
             let maxToSpawn = 10 - currentFruitCount;
             let numberOfFruits = Math.min(Math.floor(Math.random() * 4) + 1, maxToSpawn); 
-            if (numberOfFruits > 4) numberOfFruits = 4;
             
             if (numberOfFruits <= 0) return;
-
-            let correctPushed = false;
 
             for (let i = 0; i < numberOfFruits; i++) {
                 let startX = canvas.width * 0.2 + Math.random() * (canvas.width * 0.6); 
@@ -1425,22 +1430,14 @@
                 let isBomb = false;
                 let isTarget = false;
 
-                if (!correctPushed && i === numberOfFruits - 1) {
-                    isTarget = true;
-                    correctPushed = true;
-                    if (Math.random() < 0.15) isSpecial = true;
+                let rand = Math.random();
+                if (rand < 0.15) {
+                    // 15% 機率出現炸彈
+                    isBomb = true;
                 } else {
-                    let rand = Math.random();
-                    if (rand < 0.15) {
-                        isBomb = true;
-                    } else if (rand < 0.575) {
-                        isTarget = true;
-                        correctPushed = true;
-                        if (Math.random() < 0.15) isSpecial = true;
-                    } else {
-                        isTarget = false;
-                        if (Math.random() < 0.15) isSpecial = true;
-                    }
+                    // 修改：正確答案與錯誤答案的出現比例為 5:5
+                    isTarget = Math.random() < 0.5;
+                    if (Math.random() < 0.15) isSpecial = true;
                 }
 
                 let number = 0;
