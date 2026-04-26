@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數學水果忍者 V26</title>
+    <title>數學水果忍者 V31</title>
     <style>
         body, html {
             margin: 0;
@@ -210,12 +210,9 @@
         }
 
         .diff-c { background-color: #e74c3c; } 
-        .diff-b { background-color: #f39c12; } 
         .diff-a { background-color: #2ecc71; } 
+        .diff-b { background-color: #f39c12; } 
         .diff-s { background-color: #3498db; } 
-        .diff-ss { background-color: #9b59b6; } 
-        .diff-ssr { background-color: #8e44ad; } 
-        .diff-sss { background-color: #2c3e50; } 
 
         button.action-btn {
             margin-top: 10px;
@@ -282,7 +279,7 @@
             border-radius: 10px;
             margin: 15px 0;
             text-align: left;
-            max-height: 350px; /* 加大高度顯示更多玩家 */
+            max-height: 350px; 
             overflow-y: auto;
             border: 2px solid #f1c40f;
         }
@@ -344,27 +341,22 @@
 </head>
 <body onclick="handleGlobalClick()">
 
-    <!-- 遊戲主選單 -->
     <div id="startMenu" class="menu-panel">
         <h1>數學水果忍者</h1>
         
         <p style="font-size: 20px; color: #ccc; margin-bottom: 10px; text-align: left;">請選擇挑戰難度：</p>
         
         <div class="difficulty-grid" id="difficultyGrid">
-            <button class="diff-btn diff-c active" data-diff="C">C: 2的倍數 (1-100)</button>
-            <button class="diff-btn diff-b" data-diff="B">B: 3的倍數 (1-100)</button>
-            <button class="diff-btn diff-a" data-diff="A">A: 4的倍數 (1-100)</button>
-            <button class="diff-btn diff-s" data-diff="S">S: 6的倍數 (1-100)</button>
-            <button class="diff-btn diff-ss" data-diff="SS">SS: 4的倍數 (100-200)</button>
-            <button class="diff-btn diff-ssr" data-diff="SSR">SSR: 6的倍數 (100-200)</button>
-            <button class="diff-btn diff-sss" data-diff="SSS">SSS: 7的倍數 或 質數 (50-200)</button>
+            <button class="diff-btn diff-c active" data-diff="C">程度一: 2的倍數 (1-200)</button>
+            <button class="diff-btn diff-a" data-diff="A">程度二: 4的倍數 (1-200)</button>
+            <button class="diff-btn diff-b" data-diff="B">程度三: 3的倍數 (1-150)</button>
+            <button class="diff-btn diff-s" data-diff="S">程度四: 6的倍數 (1-150)</button>
         </div>
 
         <button class="action-btn" onclick="startGame()">開始遊戲</button>
         <button class="action-btn btn-secondary" onclick="openAdmin()">後台管理</button>
     </div>
 
-    <!-- 後台管理分頁 -->
     <div id="adminMenu" class="menu-panel" style="display: none;">
         <h2>⚙️ 後台設定</h2>
         
@@ -408,25 +400,21 @@
         <button class="action-btn btn-success" onclick="closeAdmin()">儲存並返回</button>
     </div>
 
-    <!-- 遊戲進行中的 UI -->
     <div id="ui" style="display: none;">
         <div id="scoreBox">分數: <span id="score">0</span></div>
         <div id="questionBox">目標：<span id="question"></span></div>
         <div id="timeBox">時間: <span id="time">45</span>s</div>
     </div>
     
-    <!-- 左下角版本號 -->
-    <div id="version">V26</div>
+    <div id="version">V31</div>
 
-    <!-- 遊戲結束畫面與排行榜 -->
     <div id="gameOver" class="menu-panel" style="display: none;">
         <h1>時間到！</h1>
         <p>最終分數: <span id="finalScore" style="color: #2ecc71; font-size: 36px; font-weight: bold;">0</span></p>
         
         <div id="submitForm" class="submit-group">
-            <input type="text" id="playerClass" placeholder="班別 (例: 1A)" maxlength="10">
-            <input type="text" id="playerSid" placeholder="學號 (例: 01)" maxlength="10">
-            <input type="text" id="playerName" placeholder="名字 (例: 陳小明)" maxlength="20">
+            <input type="text" id="playerClass" placeholder="班別 (老師可留空)" maxlength="10">
+            <input type="text" id="playerSid" placeholder="學號 或 老師簡稱" maxlength="20">
             <button class="action-btn btn-success" onclick="submitScore()">上傳成績並查看排行榜</button>
         </div>
 
@@ -462,19 +450,16 @@
         const bgmPlayer = new Audio();
         bgmPlayer.loop = true;
         
-        // 偵測頁面可見性，當退出網頁（切換分頁或縮小）時停止播放
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
                 bgmPlayer.pause();
             } else {
-                // 如果是在遊戲中或選單中且已開始過 BGM，則恢復播放
                 if (bgmStarted && bgmPlayer.src) {
                     bgmPlayer.play().catch(e => console.log("恢復播放音樂受阻"));
                 }
             }
         });
 
-        // 為了處理現代瀏覽器的 Autoplay 限制
         let bgmStarted = false;
         function handleGlobalClick() {
             if (!bgmStarted && bgmPlayer.src) {
@@ -536,13 +521,10 @@
         }
 
         const difficultySettings = {
-            'C':   { shortText: '2的倍數', min: 1, max: 100, add: 10, sub: 5, condition: (n) => n % 2 === 0 },
-            'B':   { shortText: '3的倍數', min: 1, max: 100, add: 12, sub: 6, condition: (n) => n % 3 === 0 },
-            'A':   { shortText: '4的倍數', min: 1, max: 100, add: 14, sub: 7, condition: (n) => n % 4 === 0 },
-            'S':   { shortText: '6的倍數', min: 1, max: 100, add: 16, sub: 8, condition: (n) => n % 6 === 0 },
-            'SS':  { shortText: '4的倍數', min: 100, max: 200, add: 20, sub: 10, condition: (n) => n % 4 === 0 },
-            'SSR': { shortText: '6的倍數', min: 100, max: 200, add: 24, sub: 12, condition: (n) => n % 6 === 0 },
-            'SSS': { shortText: '7的倍數 或 質數', min: 50, max: 200, add: 30, sub: 15, condition: (n) => n % 7 === 0 || isPrime(n) }
+            'C': { shortText: '程度一: 2的倍數', min: 1, max: 200, add: 10, sub: 5, condition: (n) => n % 2 === 0 },
+            'A': { shortText: '程度二: 4的倍數', min: 1, max: 200, add: 14, sub: 7, condition: (n) => n % 4 === 0 },
+            'B': { shortText: '程度三: 3的倍數', min: 1, max: 150, add: 12, sub: 6, condition: (n) => n % 3 === 0 },
+            'S': { shortText: '程度四: 6的倍數', min: 1, max: 150, add: 16, sub: 8, condition: (n) => n % 6 === 0 }
         };
 
         function parseJSONData(data) {
@@ -585,7 +567,7 @@
             btns.forEach(btn => {
                 const diff = btn.getAttribute('data-diff');
                 if (difficultySettings[diff]) {
-                    btn.innerText = `${diff}: ${difficultySettings[diff].shortText} (${difficultySettings[diff].min}-${difficultySettings[diff].max})`;
+                    btn.innerText = `${difficultySettings[diff].shortText} (${difficultySettings[diff].min}-${difficultySettings[diff].max})`;
                 }
             });
         }
@@ -907,10 +889,10 @@
         async function submitScore() {
             let cls = document.getElementById('playerClass').value.trim();
             let sid = document.getElementById('playerSid').value.trim();
-            let name = document.getElementById('playerName').value.trim();
             
-            if(!cls || !sid || !name) {
-                alert("請填寫班別、學號與名字！");
+            // 已修改：容許班別留空，但學號(或老師簡稱)必須填寫
+            if(!sid) {
+                alert("請填寫學號或簡稱！");
                 return;
             }
 
@@ -928,35 +910,58 @@
             let dateStr = now.toLocaleDateString('zh-TW');
             let timeStr = now.toLocaleTimeString('zh-TW');
 
+            let diffText = currentDifficulty;
+            if (currentDifficulty === 'C') diffText = "2的倍數";
+            else if (currentDifficulty === 'A') diffText = "4的倍數";
+            else if (currentDifficulty === 'B') diffText = "3的倍數";
+            else if (currentDifficulty === 'S') diffText = "6的倍數";
+
             try {
                 const separator = url.includes('?') ? '&' : '?';
                 
-                let addUrl = `${url}${separator}action=addScore&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}&diff=${encodeURIComponent(currentDifficulty)}&cls=${encodeURIComponent(cls)}&sid=${encodeURIComponent(sid)}&name=${encodeURIComponent(name)}&score=${score}`;
-                fetch(addUrl).catch(e => console.warn("背景上傳失敗：", e));
+                let addUrl = `${url}${separator}action=addScore&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}&diff=${encodeURIComponent(diffText)}&cls=${encodeURIComponent(cls)}&sid=${encodeURIComponent(sid)}&score=${score}`;
+                let addRes = await fetch(addUrl);
+                let addData = await addRes.json();
+                
+                let playerName = addData.name || "未知";
                 
                 let getUrl = `${url}${separator}action=getLeaderboard`;
                 let res = await fetch(getUrl);
                 let data = await res.json();
                 
-                data.push({
-                    cls: cls,
-                    name: name,
-                    score: score,
-                    diff: currentDifficulty
-                });
+                let alreadyInList = data.some(r => r.cls === cls && r.sid === sid && r.score === score);
+                if (!alreadyInList) {
+                    data.push({
+                        cls: cls,
+                        sid: sid,
+                        name: playerName,
+                        score: score,
+                        diff: diffText
+                    });
+                }
                 
-                // 修改：依分數排序，但不做 slice(0, 10) 截斷，顯示全體排名
                 data.sort((a, b) => b.score - a.score);
                 
                 let html = '';
                 data.forEach((row) => {
-                    let isMe = (row.name === name && row.score === score && row.cls === cls);
+                    let isMe = (row.sid === sid && row.score === score && row.cls === cls);
                     let rowStyle = isMe ? 'background: rgba(46, 204, 113, 0.2); border-radius: 5px;' : '';
                     
+                    let displayDiff = row.diff;
+                    if (row.diff === 'C') displayDiff = "2的倍數";
+                    else if (row.diff === 'A') displayDiff = "4的倍數";
+                    else if (row.diff === 'B') displayDiff = "3的倍數";
+                    else if (row.diff === 'S') displayDiff = "6的倍數";
+                    
+                    // 判斷是否為老師的邏輯
+                    let isTeacher = !row.cls || row.cls === "";
+                    let displayCls = isTeacher ? "" : `${row.cls} `;
+                    let displayName = isTeacher ? row.sid : row.name;
+                    
                     html += `<li style="${rowStyle} padding: 6px; border-bottom: 1px dashed #555;">
-                        ${row.cls} ${row.name} 
+                        ${displayCls}${displayName} 
                         <span class="leaderboard-highlight">${row.score} 分</span> 
-                        <span style="font-size:16px;color:#aaa;">(${row.diff})</span>
+                        <span style="font-size:16px;color:#aaa;">(${displayDiff})</span>
                     </li>`;
                 });
                 document.getElementById('leaderboardList').innerHTML = html;
@@ -1359,7 +1364,12 @@
             
             timeLeft = gameTimeSetting;
             timeEl.innerText = timeLeft;
-            questionEl.innerHTML = difficultySettings[currentDifficulty].shortText;
+            
+            let diffConfig = difficultySettings[currentDifficulty];
+            if (diffConfig) {
+                let parts = diffConfig.shortText.split(': ');
+                questionEl.innerHTML = parts.length > 1 ? parts[1] : diffConfig.shortText;
+            }
             
             if (bgmPlayer.src && bgmPlayer.paused) {
                 bgmPlayer.play().catch(e => console.log("音樂播放受阻"));
@@ -1419,6 +1429,8 @@
             
             if (numberOfFruits <= 0) return;
 
+            let correctPushed = false;
+
             for (let i = 0; i < numberOfFruits; i++) {
                 let startX = canvas.width * 0.2 + Math.random() * (canvas.width * 0.6); 
                 let startY = -100; 
@@ -1432,10 +1444,8 @@
 
                 let rand = Math.random();
                 if (rand < 0.15) {
-                    // 15% 機率出現炸彈
                     isBomb = true;
                 } else {
-                    // 修改：正確答案與錯誤答案的出現比例為 5:5
                     isTarget = Math.random() < 0.5;
                     if (Math.random() < 0.15) isSpecial = true;
                 }
