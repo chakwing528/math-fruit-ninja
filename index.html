@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數學水果忍者 V31</title>
+    <title>數學水果忍者 V35</title>
     <style>
         body, html {
             margin: 0;
@@ -406,20 +406,26 @@
         <div id="timeBox">時間: <span id="time">45</span>s</div>
     </div>
     
-    <div id="version">V31</div>
+    <div id="version">V35</div>
 
     <div id="gameOver" class="menu-panel" style="display: none;">
         <h1>時間到！</h1>
         <p>最終分數: <span id="finalScore" style="color: #2ecc71; font-size: 36px; font-weight: bold;">0</span></p>
         
         <div id="submitForm" class="submit-group">
-            <input type="text" id="playerClass" placeholder="班別 (老師可留空)" maxlength="10">
-            <input type="text" id="playerSid" placeholder="學號 或 老師簡稱" maxlength="20">
+            <input type="text" id="playerClass" placeholder="班別 (老師填此格即可)" maxlength="20">
+            <input type="text" id="playerSid" placeholder="學號 (老師可留空)" maxlength="10">
             <button class="action-btn btn-success" onclick="submitScore()">上傳成績並查看排行榜</button>
         </div>
 
         <div id="leaderboardDisplay" class="leaderboard-container" style="display:none;">
             <h3>🏆 總排行榜 (全體排名) 🏆</h3>
+            
+            <!-- 新增：顯示玩家當前排名的置頂區塊 -->
+            <div id="myCurrentRank" style="background: rgba(46, 204, 113, 0.2); padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; border: 2px solid #2ecc71; display: none;">
+                你的目前排名：第 <span id="myRankNumber" style="font-size: 26px; font-weight: bold; color: #ffcc00;"></span> 名
+            </div>
+
             <ol id="leaderboardList"></ol>
         </div>
 
@@ -431,7 +437,6 @@
     <script>
         // =========================================================================
         // 🎵 預設音效檔案設定 🎵
-        // 請將你的音效檔案上傳至 GitHub，並與這個 index.html 放在同一個資料夾。
         // =========================================================================
         const DEFAULT_BGM_URL = "./bgm.mp3"; 
         const DEFAULT_SLICE_URL = "./slice.m4a"; 
@@ -887,12 +892,11 @@
         }
 
         async function submitScore() {
-            let cls = document.getElementById('playerClass').value.trim();
-            let sid = document.getElementById('playerSid').value.trim();
+            let cls = document.getElementById('playerClass').value.trim().toUpperCase();
+            let sid = document.getElementById('playerSid').value.trim().toUpperCase();
             
-            // 已修改：容許班別留空，但學號(或老師簡稱)必須填寫
-            if(!sid) {
-                alert("請填寫學號或簡稱！");
+            if(!cls) {
+                alert("請填寫班別！(若為老師請直接將名字填在此欄位)");
                 return;
             }
 
@@ -905,6 +909,7 @@
             document.getElementById('submitForm').style.display = 'none';
             document.getElementById('leaderboardDisplay').style.display = 'block';
             document.getElementById('leaderboardList').innerHTML = '<li>上傳與讀取中，請稍候...</li>';
+            document.getElementById('myCurrentRank').style.display = 'none'; // 讀取中先隱藏置頂名次
 
             let now = new Date();
             let dateStr = now.toLocaleDateString('zh-TW');
@@ -918,12 +923,21 @@
 
             try {
                 const separator = url.includes('?') ? '&' : '?';
-                
                 let addUrl = `${url}${separator}action=addScore&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}&diff=${encodeURIComponent(diffText)}&cls=${encodeURIComponent(cls)}&sid=${encodeURIComponent(sid)}&score=${score}`;
-                let addRes = await fetch(addUrl);
-                let addData = await addRes.json();
                 
-                let playerName = addData.name || "未知";
+                let playerName = ""; 
+
+                try {
+                    let addRes = await fetch(addUrl);
+                    if (addRes.ok) {
+                        let addData = await addRes.json();
+                        if (addData && addData.name) {
+                            playerName = addData.name;
+                        }
+                    }
+                } catch(addErr) {
+                    console.warn("背景上傳出現異常:", addErr);
+                }
                 
                 let getUrl = `${url}${separator}action=getLeaderboard`;
                 let res = await fetch(getUrl);
@@ -941,10 +955,17 @@
                 }
                 
                 data.sort((a, b) => b.score - a.score);
-                
+
+                // --- 修改 2：計算當前排名並顯示在頂部 ---
+                let myRankIndex = data.findIndex(r => r.cls === cls && r.sid === sid && r.score === score);
+                if (myRankIndex !== -1) {
+                    document.getElementById('myCurrentRank').style.display = 'block';
+                    document.getElementById('myRankNumber').innerText = myRankIndex + 1;
+                }
+
                 let html = '';
                 data.forEach((row) => {
-                    let isMe = (row.sid === sid && row.score === score && row.cls === cls);
+                    let isMe = (row.cls === cls && row.sid === sid && row.score === score);
                     let rowStyle = isMe ? 'background: rgba(46, 204, 113, 0.2); border-radius: 5px;' : '';
                     
                     let displayDiff = row.diff;
@@ -953,21 +974,24 @@
                     else if (row.diff === 'B') displayDiff = "3的倍數";
                     else if (row.diff === 'S') displayDiff = "6的倍數";
                     
-                    // 判斷是否為老師的邏輯
-                    let isTeacher = !row.cls || row.cls === "";
-                    let displayCls = isTeacher ? "" : `${row.cls} `;
-                    let displayName = isTeacher ? row.sid : row.name;
+                    let isTeacher = !row.cls || row.cls.trim() === "";
+                    let displayCls = isTeacher ? "" : row.cls;
+                    let displayName = isTeacher ? row.sid : (row.name || "");
                     
-                    html += `<li style="${rowStyle} padding: 6px; border-bottom: 1px dashed #555;">
-                        ${displayCls}${displayName} 
-                        <span class="leaderboard-highlight">${row.score} 分</span> 
-                        <span style="font-size:16px;color:#aaa;">(${displayDiff})</span>
+                    // --- 修改 1：使用 Flexbox 自動對齊班別、姓名、分數、程度，去除了 <li> 的數字預設樣式影響 ---
+                    html += `<li style="${rowStyle} padding: 6px 0; border-bottom: 1px dashed #555;">
+                        <div style="display: flex; width: 100%; align-items: center; font-size: 18px;">
+                            <span style="width: 45px; text-align: left; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0;">${displayCls}</span>
+                            <span style="flex-grow: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 5px;">${displayName}</span>
+                            <span style="width: 60px; text-align: right; color: #2ecc71; font-weight: bold; flex-shrink: 0;">${row.score} 分</span>
+                            <span style="width: 80px; text-align: right; font-size: 13px; color: #aaa; flex-shrink: 0;">(${displayDiff})</span>
+                        </div>
                     </li>`;
                 });
                 document.getElementById('leaderboardList').innerHTML = html;
                 
             } catch(e) {
-                console.warn("上傳/讀取成績失敗：", e.message);
+                console.warn("讀取成績失敗：", e.message);
                 document.getElementById('leaderboardList').innerHTML = '<li>上傳/讀取失敗，請檢查網路或 API 網址設定。</li>';
             }
         }
@@ -1357,6 +1381,10 @@
         window.startGame = function() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            // --- 修改 3：自動清空輸入框，準備迎接新一局 ---
+            document.getElementById('playerClass').value = '';
+            document.getElementById('playerSid').value = '';
 
             startMenuEl.style.display = 'none';
             gameOverEl.style.display = 'none';
