@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數學水果忍者 V35</title>
+    <title>數學水果忍者 V38</title>
     <style>
         body, html {
             margin: 0;
@@ -246,27 +246,27 @@
         .submit-group {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px; 
             margin: 15px 0;
             align-items: center; 
         }
         
         .submit-group input {
-            font-size: 20px;
-            padding: 10px;
-            border-radius: 8px;
+            font-size: 26px; /* 稍微放大字體，讓視覺更平衡 */
+            padding: 26px 10px; /* 高度加倍，讓輸入框變得更大更清楚 */
+            border-radius: 12px; 
             border: 3px solid #fff;
             background: #2c3e50;
             color: #ffcc00;
             text-align: center;
             font-weight: bold;
             width: 100%; 
-            max-width: 320px; 
+            max-width: 360px; 
             box-sizing: border-box;
         }
 
         .submit-group button {
-            max-width: 320px;
+            max-width: 360px; 
         }
 
         .submit-group input::placeholder {
@@ -341,9 +341,21 @@
 </head>
 <body onclick="handleGlobalClick()">
 
-    <div id="startMenu" class="menu-panel">
+    <!-- 1. 進入遊戲的第一個畫面（資料輸入） -->
+    <div id="loginMenu" class="menu-panel">
         <h1>數學水果忍者</h1>
-        
+        <p style="font-size: 20px; color: #ccc; margin-bottom: 20px;">請先輸入個人資料：</p>
+        <div class="submit-group">
+            <input type="text" id="playerClass" placeholder="班別 (老師填此格即可)" maxlength="20">
+            <input type="text" id="playerSid" placeholder="學號 (老師可留空)" maxlength="10">
+            <button class="action-btn btn-success" onclick="goToDifficultyMenu()">下一步</button>
+        </div>
+        <button class="action-btn btn-secondary" onclick="openAdmin()" style="font-size: 18px; padding: 10px; margin-top: 20px;">⚙️ 後台管理</button>
+    </div>
+
+    <!-- 2. 遊戲主選單（選擇難度）預設隱藏 -->
+    <div id="startMenu" class="menu-panel" style="display: none;">
+        <h1>數學水果忍者</h1>
         <p style="font-size: 20px; color: #ccc; margin-bottom: 10px; text-align: left;">請選擇挑戰難度：</p>
         
         <div class="difficulty-grid" id="difficultyGrid">
@@ -354,9 +366,10 @@
         </div>
 
         <button class="action-btn" onclick="startGame()">開始遊戲</button>
-        <button class="action-btn btn-secondary" onclick="openAdmin()">後台管理</button>
+        <button class="action-btn btn-secondary" onclick="backToLogin()" style="font-size: 18px; padding: 10px;">返回上一步</button>
     </div>
 
+    <!-- 後台管理分頁 -->
     <div id="adminMenu" class="menu-panel" style="display: none;">
         <h2>⚙️ 後台設定</h2>
         
@@ -406,30 +419,28 @@
         <div id="timeBox">時間: <span id="time">45</span>s</div>
     </div>
     
-    <div id="version">V35</div>
+    <div id="version">V38</div>
 
     <div id="gameOver" class="menu-panel" style="display: none;">
         <h1>時間到！</h1>
         <p>最終分數: <span id="finalScore" style="color: #2ecc71; font-size: 36px; font-weight: bold;">0</span></p>
         
+        <!-- 提交按鈕區域 -->
         <div id="submitForm" class="submit-group">
-            <input type="text" id="playerClass" placeholder="班別 (老師填此格即可)" maxlength="20">
-            <input type="text" id="playerSid" placeholder="學號 (老師可留空)" maxlength="10">
+            <p style="font-size: 18px; color: #fff;">請務必上傳成績才能進行下一局！</p>
             <button class="action-btn btn-success" onclick="submitScore()">上傳成績並查看排行榜</button>
         </div>
 
         <div id="leaderboardDisplay" class="leaderboard-container" style="display:none;">
             <h3>🏆 總排行榜 (全體排名) 🏆</h3>
-            
-            <!-- 新增：顯示玩家當前排名的置頂區塊 -->
             <div id="myCurrentRank" style="background: rgba(46, 204, 113, 0.2); padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; border: 2px solid #2ecc71; display: none;">
                 你的目前排名：第 <span id="myRankNumber" style="font-size: 26px; font-weight: bold; color: #ffcc00;"></span> 名
             </div>
-
             <ol id="leaderboardList"></ol>
         </div>
 
-        <button class="action-btn" onclick="resetToMainMenu()">回主選單</button>
+        <!-- 只有在成功提交成績後，這顆按鈕才會出現 -->
+        <button id="backToMainBtn" class="action-btn" onclick="resetToMainMenu()" style="display: none; margin-top: 15px;">回主選單 (新一局)</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -451,6 +462,10 @@
         let splashNoiseBuffer;
         let customSliceBuffer = null; 
         let customBombBuffer = null; 
+
+        // 儲存玩家個人資料的全局變數
+        let currentPlayerClass = "";
+        let currentPlayerSid = "";
 
         const bgmPlayer = new Audio();
         bgmPlayer.loop = true;
@@ -840,7 +855,6 @@
         const timeEl = document.getElementById('time');
         const gameOverEl = document.getElementById('gameOver');
         const finalScoreEl = document.getElementById('finalScore');
-        const startMenuEl = document.getElementById('startMenu');
         const adminMenuEl = document.getElementById('adminMenu');
         const uiEl = document.getElementById('ui');
 
@@ -872,8 +886,31 @@
         const bombImage = new Image();
         bombImage.src = 'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/512/emoji_u1f4a3.png';
 
+        // 登入畫面的下一步邏輯
+        window.goToDifficultyMenu = function() {
+            let cls = document.getElementById('playerClass').value.trim().toUpperCase();
+            let sid = document.getElementById('playerSid').value.trim().toUpperCase();
+
+            if(!cls) {
+                alert("請填寫班別！(若為老師請直接將名字填在此欄位)");
+                return;
+            }
+
+            currentPlayerClass = cls;
+            currentPlayerSid = sid;
+
+            document.getElementById('loginMenu').style.display = 'none';
+            document.getElementById('startMenu').style.display = 'block';
+        }
+
+        // 返回上一步
+        window.backToLogin = function() {
+            document.getElementById('startMenu').style.display = 'none';
+            document.getElementById('loginMenu').style.display = 'block';
+        }
+
         window.openAdmin = function() {
-            startMenuEl.style.display = 'none';
+            document.getElementById('loginMenu').style.display = 'none';
             adminMenuEl.style.display = 'block';
         }
 
@@ -888,17 +925,13 @@
             }
 
             adminMenuEl.style.display = 'none';
-            startMenuEl.style.display = 'block';
+            document.getElementById('loginMenu').style.display = 'block';
         }
 
         async function submitScore() {
-            let cls = document.getElementById('playerClass').value.trim().toUpperCase();
-            let sid = document.getElementById('playerSid').value.trim().toUpperCase();
-            
-            if(!cls) {
-                alert("請填寫班別！(若為老師請直接將名字填在此欄位)");
-                return;
-            }
+            // 從全域變數讀取剛才登入輸入的資料
+            let cls = currentPlayerClass;
+            let sid = currentPlayerSid;
 
             let url = document.getElementById('sheetUrlInput').value.trim();
             if(!url) {
@@ -909,7 +942,10 @@
             document.getElementById('submitForm').style.display = 'none';
             document.getElementById('leaderboardDisplay').style.display = 'block';
             document.getElementById('leaderboardList').innerHTML = '<li>上傳與讀取中，請稍候...</li>';
-            document.getElementById('myCurrentRank').style.display = 'none'; // 讀取中先隱藏置頂名次
+            document.getElementById('myCurrentRank').style.display = 'none'; 
+            
+            // 提交完成後，顯示回主選單按鈕
+            document.getElementById('backToMainBtn').style.display = 'block'; 
 
             let now = new Date();
             let dateStr = now.toLocaleDateString('zh-TW');
@@ -921,9 +957,11 @@
             else if (currentDifficulty === 'B') diffText = "3的倍數";
             else if (currentDifficulty === 'S') diffText = "6的倍數";
 
+            let safeCls = cls === "" ? " " : cls;
+
             try {
                 const separator = url.includes('?') ? '&' : '?';
-                let addUrl = `${url}${separator}action=addScore&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}&diff=${encodeURIComponent(diffText)}&cls=${encodeURIComponent(cls)}&sid=${encodeURIComponent(sid)}&score=${score}`;
+                let addUrl = `${url}${separator}action=addScore&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}&diff=${encodeURIComponent(diffText)}&cls=${encodeURIComponent(safeCls)}&sid=${encodeURIComponent(sid)}&score=${score}`;
                 
                 let playerName = ""; 
 
@@ -931,7 +969,7 @@
                     let addRes = await fetch(addUrl);
                     if (addRes.ok) {
                         let addData = await addRes.json();
-                        if (addData && addData.name) {
+                        if (addData && addData.name && addData.name !== "未知") {
                             playerName = addData.name;
                         }
                     }
@@ -943,10 +981,10 @@
                 let res = await fetch(getUrl);
                 let data = await res.json();
                 
-                let alreadyInList = data.some(r => r.cls === cls && r.sid === sid && r.score === score);
+                let alreadyInList = data.some(r => r.cls.trim() === cls && r.sid === sid && r.score === score);
                 if (!alreadyInList) {
                     data.push({
-                        cls: cls,
+                        cls: safeCls,
                         sid: sid,
                         name: playerName,
                         score: score,
@@ -956,8 +994,7 @@
                 
                 data.sort((a, b) => b.score - a.score);
 
-                // --- 修改 2：計算當前排名並顯示在頂部 ---
-                let myRankIndex = data.findIndex(r => r.cls === cls && r.sid === sid && r.score === score);
+                let myRankIndex = data.findIndex(r => r.cls.trim() === cls && r.sid === sid && r.score === score);
                 if (myRankIndex !== -1) {
                     document.getElementById('myCurrentRank').style.display = 'block';
                     document.getElementById('myRankNumber').innerText = myRankIndex + 1;
@@ -965,7 +1002,7 @@
 
                 let html = '';
                 data.forEach((row) => {
-                    let isMe = (row.cls === cls && row.sid === sid && row.score === score);
+                    let isMe = (row.sid === sid && row.score === score && (row.cls || "").trim() === cls);
                     let rowStyle = isMe ? 'background: rgba(46, 204, 113, 0.2); border-radius: 5px;' : '';
                     
                     let displayDiff = row.diff;
@@ -978,7 +1015,6 @@
                     let displayCls = isTeacher ? "" : row.cls;
                     let displayName = isTeacher ? row.sid : (row.name || "");
                     
-                    // --- 修改 1：使用 Flexbox 自動對齊班別、姓名、分數、程度，去除了 <li> 的數字預設樣式影響 ---
                     html += `<li style="${rowStyle} padding: 6px 0; border-bottom: 1px dashed #555;">
                         <div style="display: flex; width: 100%; align-items: center; font-size: 18px;">
                             <span style="width: 45px; text-align: left; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0;">${displayCls}</span>
@@ -1382,11 +1418,7 @@
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
 
-            // --- 修改 3：自動清空輸入框，準備迎接新一局 ---
-            document.getElementById('playerClass').value = '';
-            document.getElementById('playerSid').value = '';
-
-            startMenuEl.style.display = 'none';
+            document.getElementById('startMenu').style.display = 'none';
             gameOverEl.style.display = 'none';
             uiEl.style.display = 'flex';
             
@@ -1428,11 +1460,24 @@
             fruitSpawnInterval = setInterval(spawnFruits, 1000); 
         }
 
+        // 新增：結束後清空資料，返回首頁供下一位同學使用
         window.resetToMainMenu = function() {
             gameOverEl.style.display = 'none';
-            startMenuEl.style.display = 'block';
+            
+            // 清空輸入框，準備迎接新一局
+            document.getElementById('playerClass').value = '';
+            document.getElementById('playerSid').value = '';
+            currentPlayerClass = "";
+            currentPlayerSid = "";
+            
+            document.getElementById('loginMenu').style.display = 'block';
             uiEl.style.display = 'none';
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 將結束畫面的 UI 狀態重置
+            document.getElementById('submitForm').style.display = 'flex';
+            document.getElementById('leaderboardDisplay').style.display = 'none';
+            document.getElementById('backToMainBtn').style.display = 'none';
         }
 
         function endGame() {
@@ -1442,8 +1487,10 @@
             gameOverEl.style.display = 'block';
             finalScoreEl.innerText = score;
 
+            // 確保每次遊戲結束時，強制顯示上傳按鈕，隱藏其他區塊
             document.getElementById('submitForm').style.display = 'flex';
             document.getElementById('leaderboardDisplay').style.display = 'none';
+            document.getElementById('backToMainBtn').style.display = 'none';
         }
 
         function spawnFruits() {
